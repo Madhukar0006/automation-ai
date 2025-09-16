@@ -1,0 +1,23 @@
+services:
+  # Your custom parser package image (contains Vector + your logic)
+  parser-package:
+    build: .
+    image: dpm-testing:v0.49.0
+    container_name: dpm-test-config1
+    volumes:
+      # Mount input directory for log files (for dynamic input)
+      #- ./input:/app/input:ro
+      - ./vector_logs:/app/input:ro
+      # Mount output directory for processed logs (for easy access)
+      - ./vector_output:/app/output
+      # Mount entire staging directory for dynamic configuration
+      - ./vector_config:/etc/vector/config:ro
+      # Mount the start script for dynamic changes
+      - ./start-vector.sh:/app/start-vector.sh:ro
+    environment:
+      - INPUT_DIR=/app/input
+      - OUTPUT_DIR=/app/output
+      - VECTOR_DATA_DIR=/app/data
+
+    restart: unless-stopped
+    entrypoint: ["sh", "/app/start-vector.sh"]

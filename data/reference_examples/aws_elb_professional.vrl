@@ -1,0 +1,189 @@
+#######################################################
+## VRL Transforms for AWS Elastic Load-Balancer (ELB)
+#######################################################
+
+### Removing fields add by agents, these fields can sometimes mix-up with event data fields
+if exists(.host) { del(.host) }
+# if exists(.cloud) { del(.cloud) }
+# if exists(.log) { del(.log) }
+
+### Adding ECS Fields
+if .observer.type == "cloud-aws" { .observer.type = "lb" }
+if !exists(.observer.vendor) { .observer.vendor = "aws" }
+if !exists(.observer.product) { .observer.product = "elb" }
+if !exists(.event.dataset) { .event.dataset = "aws.elb" }
+.event.kind = "event"
+.event.category = []
+.event.type = ["info"]
+.cloud.provider = "aws"
+
+### Define related fields
+.related.ip = []
+.related.user = []
+
+## Classic ELB patterns documented in https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html
+## ELB v2 Application load balancers https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html
+## ELB v2 Netwwork load balancers https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-access-logs.html
+
+### Parse AWS ELB logs using function "parse_aws_alb_log"
+### Add "event.original" and "event_data" fields
+if exists(.message) && is_string(.message) {
+  .event.original = del(.message)
+  
+  ## Strip carriage return (CR) character, if exists
+  if match(string!(.event.original), r'(\r)') {
+    .event.original = replace(string!(.event.original), r'(\r)', "")
+  }
+  if match(string!(.event.original), r'(\n)') {
+    .event.original = replace(string!(.event.original), r'(\n)', "")
+  }
+  
+  .event_data,err = parse_aws_alb_log(.event.original)
+  if err != null {
+    _grokked,err = parse_groks(.event.original,[
+      "%{TIMESTAMP_ISO8601:timestamp} %{IP:source_ip} %{INT:source_port} %{INT:listener} %{DATA:ssl_protocol} %{DATA:ssl_cipher} %{DATA:tls_handshake_latency} %{DATA:leaf_client_cert_subject} ((NotBefore=%{DATA:leaf_client_cert_not_before})|-)((;NotAfter=%{DATA:leaf_client_cert_not_after} )| -)%{DATA:leaf_client_cert_serial_number}\\s*%{WORD:tls_verify_status}(-|:%{GREEDYDATA:tls_error_code}| %{GREEDYDATA}|)",
+      "%{WORD:type} %{BASE16FLOAT:tls_handshake_time.ms} %{TIMESTAMP_ISO8601:timestamp} %{DATA:name} %{DATA:listener} %{IP:source_ip}:%{INT:source_port} %{IP:backend.ip}:%{INT:backend.port} %{DATA} %{DATA} %{DATA:source_bytes} %{DATA:destination_bytes} %{DATA} %{DATA:chosen_cert.arn} %{DATA} %{DATA:ssl_cipher} %{DATA:ssl_protocol} %{DATA} %{DATA:destination_domain} %{DATA:alpn_be_protocol} %{DATA:alpn_fe_protocol} %{DATA:alpn_client_preference_list} %{GREEDYDATA:tls_connection_creation_time}",
+      "%{GREEDYDATA}"
+    ])
+    if err == null {
+      .event_data = merge(.event_data, _grokked, deep: true)
+    }
+  }
+}
+
+### Add ECS HTTP Fields
+if !is_nullish(.event_data.request_method) { .http.request.method = del(.event_data.request_method) }
+if exists(.event_data.received_bytes) { .http.request.body.bytes = to_string!(.event_data.received_bytes) }
+if !is_nullish(.event_data.sent_bytes) { .http.response.body.bytes = to_string!(.event_data.sent_bytes) }
+if !is_nullish(.event_data.elb_status_code) { .http.response.status_code = del(.event_data.elb_status_code) }
+if !is_nullish(.event_data.request_protocol) { .http.version = split!(del(.event_data.request_protocol), "/")[1] }
+
+if exists(.event_data.source_ip) { .source.ip = del(.event_data.source_ip) }
+if exists(.event_data.source_port) { .source.port = del(.event_data.source_port) }
+if exists(.event_data.source_bytes) { .source.bytes = del(.event_data.source_bytes) }
+if exists(.event_data.destination_bytes) { .destination.bytes = del(.event_data.destination_bytes) }
+if exists(.event_data.destination_domain) { .destination.domain = del(.event_data.destination_domain) }
+
+### Add ECS URL fields
+if !is_nullish(.event_data.request_url) && is_string(.event_data.request_url) {
+  .url = parse_url!(.event_data.request_url, default_known_ports:true)
+  .url.original = del(.event_data.request_url)
+  ## Some issues with VRL removing special chars when doing parse, do manually.
+  .url.query = split!(.url.original, "?", limit: 2)[1]
+  .url.domain = del(.url.host)
+}
+
+### Add ECS USER_AGENT fields
+if !is_nullish(.event_data.user_agent) {
+  .user_agent = parse_user_agent!(.event_data.user_agent)
+  .user_agent.original = del(.event_data.user_agent)
+}
+
+### Add ECS SOURCE fields
+if !is_nullish(.event_data.client_host) {
+  _tmp = split!(del(.event_data.client_host), ":")
+  .source.ip = _tmp[0]
+  .source.port = _tmp[1]
+  .source.address = .source.ip
+}
+
+### Add ECS EVENT fields
+if !is_nullish(.http) {
+  .event_data.protocol = "http"
+  .event.category = push(.event.category, "web")
+} else {
+  .event_data.protocol = "tcp"
+  .event.category = push(.event.category, "network")
+}
+
+if !is_nullish(.event_data.timestamp) {
+  .event.end,err = parse_timestamp(.event_data.timestamp, "%+")
+  if err != null {
+    .event.end = parse_timestamp!(.event_data.timestamp, "%FT%T")
+  }
+  .event.created = .event.end
+}
+
+if !is_nullish(.event_data.request_creation_time) {
+  .event.start = parse_timestamp!(del(.event_data.request_creation_time), "%+")
+}
+
+if !is_nullish(.http.response.status_code) {
+  if to_int!(.http.response.status_code) >= 400 {
+    .event.outcome = "failure"
+  } else if to_int!(.http.response.status_code) < 400 {
+    .event.outcome = "success"
+  }
+}
+
+### Handle ELB "target_" fields
+if !is_nullish(.event_data.target_host) {
+  _tmp = split!(del(.event_data.target_host), ":")
+  .event_data.target_ip = _tmp[0]
+  .event_data.target_port = _tmp[1]
+}
+
+if !is_nullish(.event_data.target_processing_time) {
+  .event_data.target_processing_time_sec = del(.event_data.target_processing_time)
+}
+
+if !is_nullish(.event_data.request_processing_time) {
+  .event_data.request_processing_time_sec = del(.event_data.request_processing_time)
+}
+
+if !is_nullish(.event_data.response_processing_time) {
+  .event_data.response_processing_time_sec = del(.event_data.response_processing_time)
+}
+
+### Handle Other fields
+if !is_nullish(.event_data.actions_executed) {
+  .event_data.action_executed = split!(del(.event_data.actions_executed), ",")
+}
+
+if !is_nullish(.event_data.elb) {
+  .event_data.elb_name = del(.event_data.elb)
+}
+
+if !is_nullish(.event_data.trace_id) {
+  .trace.id = del(.event_data.trace_id)
+}
+
+if !is_nullish(.event_data.ssl_cipher) {
+  .tls.cipher = .event_data.ssl_cipher
+}
+
+if !is_nullish(.event_data.ssl_protocol) {
+  ## e.g. TLSv1.2
+  parts = split!(.event_data.ssl_protocol, "v", limit: 2)
+  if (contains!(parts[1], ".")) {
+    .tls.version = parts[1]
+  } else {
+    ver, err = slice!(parts, start: 0, end: 1) + "." + slice!(parts, start: 1)
+    if err == null {
+      .tls.version = ver
+    }
+  }
+  .tls.version_protocol = downcase!(parts[0]);
+}
+
+if exists(.source.port) {
+  .source.port = to_int!(.source.port)
+}
+
+#########################################
+### Common fields across all EventTypes
+#########################################
+if exists(.source.ip) {
+  .related.ip = push(.related.ip, .source.ip)
+}
+
+if exists(.user.name) {
+  .related.user = push(.related.user, .user.name)
+}
+
+### Remove duplicate related field values
+.related.ip = unique(.related.ip)
+.related.user = unique(.related.user)
+
+### Remove any empty or null fields
+. = compact(., string: true, array: true, object: true, null: true)

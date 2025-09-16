@@ -1,0 +1,184 @@
+########################################################
+## VRL Transforms for Apache Access Logs
+## Ref: 
+########################################################
+### Adding ECS Fields
+if !exists(.observer.vendor) { .observer.vendor = "apache" }
+if !exists(.observer.type)   { .observer.type ="webserver" }
+if !exists(.observer.product)   { .observer.product ="apache" }
+if !exists(.event.kind ) { .event.kind = "event" }
+if exists(.client_id) && !exists(.organization.id) { .organization.id = .client_id }
+if exists(.sensor_id ) && !exists(.sensor.id) { .sensor.id = .sensor_id }
+.event.type = []
+.event.category = []
+.related.ip = []
+.event.category = push(.event.category, "web") 
+.event.type = push(.event.type, "access")
+
+#### Parser logic 
+if exists(.event.original) {
+    .event.original = replace(string!(.event.original),r'"',"'")
+}
+if exists(.event.original) {
+    .event.original = replace(string!(.event.original),"\r","")
+}
+
+if exists(.event.original) {
+    _grokked, err = parse_grok(string!(.event.original), 
+     "%{DATA:address}(%{IPORHOST:destination_domain}:?%{POSINT:destination_port}? )?(%{IPORHOST:source_address}:?%{POSINT:source_port}? )%{DATA:apache_access_identity} %{DATA:user_name} \\[%{HTTPDATE:apache_access_time}\\] '(%{DATA:apache_access_tls_handshake_error})?((%{WORD:http_request_method}?) %{DATA:_tmp_url_orig}? HTTP/%{NUMBER:http_version})?(%{WORD:http_request_method1}? ?%{DATA:apache_access_http_request_headers}?(-)? %{DATA:_tmp_url_orig1} HTTP/%{NUMBER:http_version1})?(-)?' %{NUMBER:http_response_status_code} (?:%{NUMBER:http_response_body_bytes}|-)( %{NUMBER:apache_access_response_time})?( '%{DATA:http_request_referrer}')?( '%{DATA:user_agent_original}')?( X-Forwarded-For='(?<apache_remote_addresses>(%{IP})('?,?\\s*(%{IP}))*)')?(?:%{DATA}-\\s(%{IP:host_ip}|%{DATA:url_domain})\\s%{GREEDYDATA})?.*$"
+    )
+    if err==null {
+        .destination.domain = _grokked.destination_domain
+        .destination.port = _grokked.destination_port
+        .source_address = _grokked.source_address
+        .source.port = _grokked.source_port
+        .apache.access.identity.port = _grokked.apache_access_identity
+        .user.name  = _grokked.user_name
+        .apache.access.time =_grokked.apache_access_time
+        .apache.access.tls_handshake.error = _grokked.apache_access_tls_handshake_error
+        .http.request.referrer = _grokked.http_request_referrer
+        .http.response.status_code = _grokked.http_response_status_code
+        ._tmp.url_orig = _grokked._tmp_url_orig
+        ._tmp.url_orig1 = _grokked._tmp_url_orig1
+        .http.version = _grokked.http_version
+        .http.version1 = _grokked.http_version1
+        .http.response.body.bytes = _grokked.http_response_body_bytes
+        .apache.access.response_time = _grokked.apache_access_response_time
+        .user_agent.original = _grokked.user_agent_original
+        .apache.remote_addresses = _grokked.apache_remote_addresses
+        .http.request.method = _grokked.http_request_method
+        .http.request.method1 = _grokked.http_request_method1
+        .apache.access.ssl.protocol = _grokked.apache_access_ssl_protocol
+        .apache.access.ssl.cipher = _grokked.apache_access_ssl_cipher
+        .address = _grokked.address
+        ._tmp.url_domain = _grokked.url_domain
+        .host.ip = _grokked.host_ip
+    }
+}
+if !exists(.http.request.method) && exists(.http.request.method1) {
+    .http.request.method = del(.http.request.method1)
+}
+if !exists(._tmp.url_orig) && exists(._tmp.url_orig1) {
+    ._tmp.url_orig = del(._tmp.url_orig1)
+}
+if !exists(.http.version) && exists(.http.version1) {
+    .http.version = del(.http.version1)
+}
+if exists(.event.original) {
+    _grokked, err = parse_grok(string!(.event.original), 
+     "^\\[%{HTTPDATE:apache_access_time}\\] %{IPORHOST:source_address} %{DATA:apache_access_ssl_protocol} %{DATA:apache_access_ssl_cipher} '%{WORD:http_request_method} %{DATA:_tmp_url_orig} HTTP/%{NUMBER:http_version}' (-|%{NUMBER:http_response_body_bytes}).*$"
+    )
+    if err==null {
+        .source_address = _grokked.source_address
+        .apache.access.time =_grokked.apache_access_time
+        ._tmp.url_orig = _grokked._tmp_url_orig
+        .http.version = _grokked.http_version
+        .http.response.body.bytes = _grokked.http_response_body_bytes
+        .http.request.method = _grokked.http_request_method
+        .apache.access.ssl.protocol = _grokked.apache_access_ssl_protocol
+        .apache.access.ssl.cipher = _grokked.apache_access_ssl_cipher
+    }
+}
+######## Renaming to event_data
+if exists(.apache.access) { .event_data = del(.apache.access) }
+
+.event_data.remote_addresses = []
+if is_array(.apache.remote_addresses) {
+    for_each(array!(.apache.remote_addresses)) -> |_index, value| {
+        .event_data.remote_addresses = push(.event_data.remote_addresses, strip_whitespace!(value) )
+    }
+}
+if exists(.http.response.status_code) {
+    if (!is_null(.http.response.status_code)) && (to_int!(.http.response.status_code) >= 0 && to_int!(.http.response.status_code) < 400) {
+        .event.outcome = "success"
+    } else {
+        .event.outcome = "failure"
+    }
+}
+if exists(.address) {
+        _grok, err = parse_groks(.address, 
+            ["\\'\\s*%{IP:source.ip}.*",
+            "%{GREEDYDATA:}"]
+    )
+    if err==null {
+        . = merge(., _grok, deep: true)
+    }
+
+}
+if exists(.source_address) && !exists(.source.ip) {
+    _grok , err = parse_groks(.source_address, [
+        "^(%{IP:source.ip}|%{HOSTNAME:source.domain})$",
+        "%{GREEDYDATA:event_data.raw}"
+        ]
+    )
+    if err==null{
+        . = merge(., _grok, deep: true)
+    }
+}
+if exists(.source.ip) { .source.address = .source.ip }
+if exists(._tmp.url_orig) && !is_null(._tmp.url_orig) {
+    if exists(._tmp.url_orig) { .url.original = del(._tmp.url_orig) }
+}
+if exists(._tmp.url_domain) && !is_null(._tmp.url_domain) {
+    if exists(._tmp.url_domain) { .url.domain = del(._tmp.url_domain) }
+}
+
+if exists(.url.original) && !is_null(.url.original) {
+    if contains!(.url.original,".")  {   
+        _grok , err = parse_grok( (.url.original),
+            "(?<url_path>%{DATA}\\.%{WORD:url_extension}).*"
+        )
+        if err==null{
+            . = merge(., _grok, deep: true)
+        }
+        if exists(.url_path) {.url.path = del(.url_path)}
+        if exists(.url_extension) {.url.extension = del(.url_extension)}
+    }
+}
+if exists(.url.path) && contains(string!(.url.path),"%") {
+    .url.path = replace!(.url.path,r'%[\d]*'," ")
+}
+##### User_agent parsing ######
+if exists(.user_agent.original) {
+    if exists(.user_agent.original) { 
+        _user , err = parse_user_agent(.user_agent.original)
+        if err==null {
+            . = merge(., _user, deep: true)
+        }
+    }
+    .os.full,err = .os.family+" "+.os.version
+    if exists(.os.full) {   
+        _grk , err = parse_grok( (.os.full),
+            "%{DATA:device_name}\\s%{GREEDYDATA}.*"
+        )
+        if err==null {
+            . = merge(., _grk, deep: true)
+        }
+    }
+    if exists(.device_name) { .user_agent.device.name = del(.device_name) }
+    if exists(.browser.family) { .user_agent.name = del(.browser.family) }
+    if exists(.browser.version) { .user_agent.version = del(.browser.version) }
+    if exists(.os.version) { .user_agent.os.version = del(.os.version) }
+    if exists(.os.family) { .user_agent.os.name = del(.os.family) }
+    if exists(.os.full) { .user_agent.os.full = del(.os.full) }
+}
+### Add event.created ###
+if exists(.event_data.time){ .created= parse_timestamp!(del(.event_data.time),format:"%d/%b/%Y:%X %z")
+    .event.created=format_timestamp!(del(.created), format: "%FT%T%.3fZ")
+}
+### Related fields ###
+if exists(.source.ip) {
+    .related.ip = push!(.related.ip, .source.ip)
+}
+
+if exists(.related.ip) { .related.ip  = unique!(.related.ip) }
+
+if exists(.user.name) && .user.name == "-" {
+  del(.user.name)
+}
+
+#### Remove temporary fields changed to ECS ####
+del(.apache.remote_addresses)
+del(.source_address)
+del(.address)
+. = compact(., string: true, array: true, object: true, null: true)

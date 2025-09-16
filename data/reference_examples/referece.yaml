@@ -1,0 +1,30 @@
+data_dir: "/Users/madhukar"
+timezone: "UTC"
+
+sources:
+  my_source:
+    # type: stdin
+    type: file
+    include:
+        - "/Users/madhukar/Desktop/UI logs/db mssql/pythonsript/input.txt"
+    start_at_beginning: true
+    read_from: beginning
+    ignore_checkpoints: true
+transforms:
+  process_sample:
+    type: remap
+    inputs: ["my_source"]
+    file: "/Users/madhukar/Desktop/UI logs/db mssql/pythonsript/code.vrl"
+
+sinks:
+  # my_sink:
+  #   type: "console"
+  #   inputs: [process_sample]
+  #   encoding:
+  #     codec: "json"
+  my_sink_id:
+    type: file
+    inputs: ["process_sample"]
+    encoding:
+      codec: "json"
+    path:  "/Users/madhukar/Desktop/UI logs/db mssql/pythonsript/output.json"

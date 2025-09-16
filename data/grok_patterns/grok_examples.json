@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "type": "grok_example",
+    "source": "Logz.io",
+    "description": "Apache-style access log parsing example from Logz.io",
+    "created_at": "2022-03-24"
+  },
+  "example": {
+    "raw_log": "128.39.24.23 - - [25/Dec/2021:12:16:50 +0000] \"GET /category/electronics HTTP/1.1\" 200 61 \"/category/finance\" \"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)\"",
+    "extracted_fields": {
+      "ip": "128.39.24.23",
+      "timestamp": "25/Dec/2021:12:16:50 +0000",
+      "verb": "GET",
+      "request": "/category/electronics HTTP/1.1",
+      "status": "200",
+      "bytes": "61",
+      "referrer": "/category/finance",
+      "os": "Windows"
+    },
+    "grok_pattern": "^%{IP:ip} - - \\[%{HTTPDATE:timestamp}\\] \"%{WORD:verb} %{DATA:request}\" %{NUMBER:status} %{NUMBER:bytes} \"%{DATA:referrer}\"%{DATA}\\(%{WORD};%{DATA}; %{WORD:os}",
+    "notes": "Parses Apache-style access log into structured fields."
+  }
+}

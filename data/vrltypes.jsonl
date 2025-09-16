@@ -1,0 +1,101 @@
+[
+    {
+      "type": "vrl_snippet",
+      "category": "parsing",
+      "title": "Syslog Parsing",
+      "snippet": "if exists(.event.original) {\n  parsed, err = parse_syslog(.event.original)\n  if err == null && is_object(parsed) { . = merge(., parsed) }\n}",
+      "description": "Safely parses RFC3164 or RFC5424 syslog messages into ECS fields like timestamp, hostname, appname, pid, and message."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "parsing",
+      "title": "JSON Parsing",
+      "snippet": "if exists(.event.original) {\n  parsed, err = parse_json(.event.original)\n  if err == null && is_object(parsed) { . = merge(., parsed) }\n}",
+      "description": "Parses JSON logs into fields while preserving ECS mappings, with error handling to avoid crashes."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "parsing",
+      "title": "Grok Parsing",
+      "snippet": "if exists(.event.original) {\n  g = parse_groks(.event.original, [\"%{IP:source.ip} %{WORD:http.method} %{URIPATHPARAM:http.path}\"])\n  if g != null && is_object(g) { . = merge(., g) }\n}",
+      "description": "Parses unstructured text logs into ECS fields using grok patterns safely."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "parsing",
+      "title": "Key-Value Parsing",
+      "snippet": "if exists(.event.original) {\n  kvs, err = parse_key_value(.event.original)\n  if err == null && is_object(kvs) { . = merge(., kvs) }\n}",
+      "description": "Extracts key-value pairs like user=alice src=1.2.3.4 into ECS-compatible fields safely."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "type_casting",
+      "title": "Type Casting Integers and Floats",
+      "snippet": "if exists(.source.port) { .source.port = to_int!(.source.port) }\nif exists(.event.duration) { .event.duration = to_float!(.event.duration) }",
+      "description": "Safely casts extracted string values into integers or floats for ECS compliance."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "timestamps",
+      "title": "Extract and Format Timestamp",
+      "snippet": "if exists(.ts) {\n  .ts = to_string!(.ts)\n  parsed_ts, err = parse_timestamp(.ts, \"%Y-%m-%d %H:%M:%S\")\n  if err == null { .event.created = format_timestamp!(parsed_ts, \"%FT%TZ\") }\n}",
+      "description": "Parses a custom timestamp field and maps it to ECS `.event.created` in ISO8601 format safely."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "ecs_mapping",
+      "title": "Field Mapping to ECS",
+      "snippet": "if exists(.src_ip) { .source.ip = del(.src_ip) }\nif exists(.dst_port) { .destination.port = to_int!(del(.dst_port)) }",
+      "description": "Maps vendor-specific field names into ECS-compliant fields while preserving types."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "ecs_mapping",
+      "title": "Process and Host Mapping",
+      "snippet": "if exists(.proc_name) { .process.name = del(.proc_name) }\nif exists(.hostname) { .host.hostname = del(.hostname) }",
+      "description": "Maps process and host fields from vendor logs into ECS schema fields."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "conditionals",
+      "title": "Conditional Logic Example",
+      "snippet": "if exists(.status) {\n  if .status == \"FAILED\" {\n    .event.outcome = \"failure\"\n  } else {\n    .event.outcome = \"success\"\n  }\n}",
+      "description": "Sets `.event.outcome` safely based on parsed log status values."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "arrays",
+      "title": "Building Related IPs Array",
+      "snippet": ".related.ip = unique(compact([.source.ip, .destination.ip, .observer.ip]))",
+      "description": "Combines multiple IP fields into a deduplicated `.related.ip` ECS array."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "arrays",
+      "title": "Collect Related Hosts",
+      "snippet": ".related.hosts = unique(compact([.host.name, .source.hostname, .destination.hostname]))",
+      "description": "Collects related hostnames into `.related.hosts` ECS array."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "cleanup",
+      "title": "Remove Temporary Fields",
+      "snippet": "if exists(.raw) { del(.raw) }\nif exists(.temp_field) { del(.temp_field) }",
+      "description": "Deletes unnecessary fields after parsing to keep ECS mapping clean."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "cleanup",
+      "title": "Final Compact",
+      "snippet": ". = compact(., string: true, array: true, object: true, null: true)",
+      "description": "Cleans up null, empty, or redundant fields in the final ECS event."
+    },
+    {
+      "type": "vrl_snippet",
+      "category": "metadata",
+      "title": "Add ECS Version and Metadata",
+      "snippet": ".ecs.version = \"8.11.0\"\nif exists(.severity) { .log.level = .severity }",
+      "description": "Adds ECS version and maps severity to `.log.level` safely."
+    }
+  ]
+  

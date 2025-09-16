@@ -1,0 +1,6 @@
+log_format: syslog
+renames:
+  host: host.name
+  pid: process.pid
+defaults:
+  observer.vendor: ""

@@ -1,0 +1,1210 @@
+{
+    "agent.hostname": {
+      "data_type": "varchar",
+      "description": "Hostname of the agent reporting the event."
+    },
+    "agent.module.name": {
+      "data_type": "varchar",
+      "description": "Name of the module that collected the event data."
+    },
+    "agent.module.type": {
+      "data_type": "varchar",
+      "description": "Type of the module used to collect the event data (e.g., auditd, filebeat)."
+    },
+    "agent.name": {
+      "data_type": "varchar",
+      "description": "Name of the agent (e.g., Filebeat, Metricbeat)."
+    },
+    "agent.status": {
+      "data_type": "varchar",
+      "description": "Status of the agent (e.g., 'online', 'offline')."
+    },
+    "agent.type": {
+      "data_type": "varchar",
+      "description": "Type of agent (e.g., 'filebeat', 'metricbeat')."
+    },
+    "agent.version": {
+      "data_type": "varchar",
+      "description": "Version of the agent."
+    },
+    "alert.created": {
+      "data_type": "timestamp(6)",
+      "description": "Timestamp when the alert was created."
+    },
+    "alert.level": {
+      "data_type": "varchar",
+      "description": "Severity level of the alert (e.g., 'critical', 'warning')."
+    },
+    "client.address": {
+      "data_type": "varchar",
+      "description": "(Alias for source or client IP address) IP address of the client initiating connection/request."
+    },
+    "client.domain": {
+      "data_type": "varchar",
+      "description": "Domain name associated with the client."
+    },
+    "client.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the client."
+    },
+    "client.ip": {
+      "data_type": "varchar",
+      "description": "IP address of the client."
+    },
+    "client.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the client."
+    },
+    "client.port": {
+      "data_type": "integer",
+      "description": "Port number used by the client."
+    },
+    "client.user.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the client user."
+    },
+    "client.user.name": {
+      "data_type": "varchar",
+      "description": "Username of the client user."
+    },
+    "cloud.account.id": {
+      "data_type": "varchar",
+      "description": "Cloud account identifier."
+    },
+    "cloud.availability_zone": {
+      "data_type": "varchar",
+      "description": "Cloud provider availability zone."
+    },
+    "cloud.instance.name": {
+      "data_type": "varchar",
+      "description": "Name of the cloud instance."
+    },
+    "cloud.machine.type": {
+      "data_type": "varchar",
+      "description": "Type of machine in the cloud environment."
+    },
+    "cloud.provider": {
+      "data_type": "varchar",
+      "description": "Name of the cloud provider (e.g., aws, gcp, azure)."
+    },
+    "cloud.region": {
+      "data_type": "varchar",
+      "description": "Cloud provider region where the resource is located."
+    },
+    "cloud.service.name": {
+      "data_type": "varchar",
+      "description": "Name of the cloud service."
+    },
+    "destination.address": {
+      "data_type": "varchar",
+      "description": "Address of the destination of the network traffic or event."
+    },
+    "destination.bytes": {
+      "data_type": "integer",
+      "description": "Number of bytes transferred to the destination."
+    },
+    "destination.domain": {
+      "data_type": "varchar",
+      "description": "Domain name of the destination."
+    },
+    "destination.group": {
+      "data_type": "varchar",
+      "description": "Security group or user group associated with the destination."
+    },
+    "destination.hostname": {
+      "data_type": "varchar",
+      "description": "Hostname of the destination."
+    },
+    "destination.ip": {
+      "data_type": "varchar",
+      "description": "IP address of the destination."
+    },
+    "destination.locality": {
+      "data_type": "varchar",
+      "description": "Locality or physical location of the destination."
+    },
+    "destination.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the destination device."
+    },
+    "destination.nat.ip": {
+      "data_type": "varchar",
+      "description": "NAT IP address for destination, if applicable."
+    },
+    "destination.nat.port": {
+      "data_type": "integer",
+      "description": "NAT port number for destination."
+    },
+    "destination.packets": {
+      "data_type": "varchar",
+      "description": "Number of packets sent to the destination."
+    },
+    "destination.port": {
+      "data_type": "integer",
+      "description": "Network port of the destination."
+    },
+    "destination.registered_domain": {
+      "data_type": "varchar",
+      "description": "Registered domain name of the destination."
+    },
+    "destination.service.name": {
+      "data_type": "varchar",
+      "description": "Name of the service at the destination."
+    },
+    "destination.software.original": {
+      "data_type": "varchar",
+      "description": "Original software name running on the destination."
+    },
+    "destination.user.domain": {
+      "data_type": "varchar",
+      "description": "Domain of the user at the destination."
+    },
+    "destination.user.email": {
+      "data_type": "varchar",
+      "description": "Email address of the destination user."
+    },
+    "destination.user.group.id": {
+      "data_type": "varchar",
+      "description": "Identifier for the destination user group."
+    },
+    "destination.user.group.name": {
+      "data_type": "varchar",
+      "description": "Name of the destination user group."
+    },
+    "destination.user.id": {
+      "data_type": "varchar",
+      "description": "Unique ID of the destination user."
+    },
+    "destination.user.name": {
+      "data_type": "varchar",
+      "description": "Username of the destination user."
+    },
+    "event.action": {
+      "data_type": "varchar",
+      "description": "Type of action associated with the event (e.g., 'opened', 'deleted')."
+    },
+    "event.category": {
+      "data_type": "array(varchar)",
+      "description": "Category or categories of the event (e.g., 'network', 'authentication')."
+    },
+    "event.code": {
+      "data_type": "integer",
+      "description": "Numeric code associated with the event."
+    },
+    "event.created": {
+      "data_type": "timestamp(6)",
+      "description": "Timestamp when the event was created."
+    },
+    "event.dataset": {
+      "data_type": "varchar",
+      "description": "Dataset or source of the event data."
+    },
+    "event.duration": {
+      "data_type": "integer",
+      "description": "Duration of the event in milliseconds or other units."
+    },
+    "event.end": {
+      "data_type": "timestamp(6)",
+      "description": "Timestamp when the event ended."
+    },
+    "event.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the event."
+    },
+    "event.ingested": {
+      "data_type": "timestamp(6)",
+      "description": "Timestamp when the event was ingested into the system."
+    },
+    "event.kind": {
+      "data_type": "varchar",
+      "description": "Kind of event (e.g., 'alert', 'event', 'state')."
+    },
+    "event.module": {
+      "data_type": "varchar",
+      "description": "Module generating the event."
+    },
+    "event.name": {
+      "data_type": "varchar",
+      "description": "Name or title of the event."
+    },
+    "event.original": {
+      "data_type": "varchar",
+      "description": "Original raw event data as received."
+    },
+    "event.outcome": {
+      "data_type": "varchar",
+      "description": "Outcome of the event (e.g., 'success', 'failure')."
+    },
+    "event.provider": {
+      "data_type": "varchar",
+      "description": "Provider or source of the event data."
+    },
+    "event.reason": {
+      "data_type": "varchar",
+      "description": "Reason or explanation for the event."
+    },
+    "event.reference": {
+      "data_type": "varchar",
+      "description": "Reference links or IDs related to the event."
+    },
+    "event.result": {
+      "data_type": "varchar",
+      "description": "Result of the event or operation."
+    },
+    "event.risk_score": {
+      "data_type": "integer",
+      "description": "Risk score associated with the event."
+    },
+    "event.sequence": {
+      "data_type": "integer",
+      "description": "Sequence number to order events in a sequence."
+    },
+    "event.severity": {
+      "data_type": "varchar",
+      "description": "Severity level of the event (e.g., 'low', 'high')."
+    },
+    "event.start": {
+      "data_type": "timestamp(6)",
+      "description": "Timestamp when the event started."
+    },
+    "event.timezone": {
+      "data_type": "varchar",
+      "description": "Timezone of the event timestamp."
+    },
+    "event.type": {
+      "data_type": "array(varchar)",
+      "description": "Type or types categorizing the event (e.g., 'info', 'error')."
+    },
+    "event.uuid": {
+      "data_type": "varchar",
+      "description": "Unique universal identifier of the event."
+    },
+    "event.version": {
+      "data_type": "varchar",
+      "description": "Version of the event or schema."
+    },
+    "file.accessed": {
+      "data_type": "varchar",
+      "description": "File system timestamp for when the file was last accessed."
+    },
+    "file.attributes": {
+      "data_type": "varchar",
+      "description": "File attributes or flags."
+    },
+    "file.code_signature.publisher": {
+      "data_type": "varchar",
+      "description": "Publisher of the digital code signature."
+    },
+    "file.code_signature.signed": {
+      "data_type": "varchar",
+      "description": "Whether the file is signed digitally."
+    },
+    "file.code_signature.status": {
+      "data_type": "varchar",
+      "description": "Status of the code signature (e.g., 'valid', 'invalid')."
+    },
+    "file.code_signature.subject_name": {
+      "data_type": "varchar",
+      "description": "Subject name in the code signature."
+    },
+    "file.code_signature.trusted": {
+      "data_type": "varchar",
+      "description": "Whether the code signature is trusted."
+    },
+    "file.code_signature.valid": {
+      "data_type": "varchar",
+      "description": "Validity status of the code signature."
+    },
+    "file.comment": {
+      "data_type": "varchar",
+      "description": "Comment or description about the file."
+    },
+    "file.created": {
+      "data_type": "timestamp(6)",
+      "description": "File creation timestamp."
+    },
+    "file.ctime": {
+      "data_type": "timestamp(6)",
+      "description": "File creation/change timestamp at the filesystem level."
+    },
+    "file.description": {
+      "data_type": "varchar",
+      "description": "Description of the file contents or purpose."
+    },
+    "file.directory": {
+      "data_type": "varchar",
+      "description": "Directory path containing the file."
+    },
+    "file.extension": {
+      "data_type": "varchar",
+      "description": "File extension or suffix."
+    },
+    "file.fork_name": {
+      "data_type": "varchar",
+      "description": "Name of resource fork (macOS specific)."
+    },
+    "file.group": {
+      "data_type": "varchar",
+      "description": "Group ownership of the file."
+    },
+    "file.hash.hashes": {
+      "data_type": "varchar",
+      "description": "Hashes of the file in various algorithms."
+    },
+    "file.hash.imphash": {
+      "data_type": "varchar",
+      "description": "Import hash of the file."
+    },
+    "file.hash.md5": {
+      "data_type": "varchar",
+      "description": "MD5 hash of the file."
+    },
+    "file.hash.sha1": {
+      "data_type": "varchar",
+      "description": "SHA-1 hash of the file."
+    },
+    "file.hash.sha256": {
+      "data_type": "varchar",
+      "description": "SHA-256 hash of the file."
+    },
+    "file.inode": {
+      "data_type": "integer",
+      "description": "File inode number."
+    },
+    "file.mime_type": {
+      "data_type": "varchar",
+      "description": "MIME type of the file."
+    },
+    "file.mode": {
+      "data_type": "varchar",
+      "description": "Permission mode of the file."
+    },
+    "file.mtime": {
+      "data_type": "varchar",
+      "description": "File modification timestamp."
+    },
+    "file.name": {
+      "data_type": "varchar",
+      "description": "File name."
+    },
+    "file.owner": {
+      "data_type": "varchar",
+      "description": "Owner of the file."
+    },
+    "file.path": {
+      "data_type": "varchar",
+      "description": "Full path to the file."
+    },
+    "file.pe.company": {
+      "data_type": "varchar",
+      "description": "Company name from PE metadata."
+    },
+    "file.pe.description": {
+      "data_type": "varchar",
+      "description": "Description from PE metadata."
+    },
+    "file.pe.file_version": {
+      "data_type": "varchar",
+      "description": "File version from PE metadata."
+    },
+    "file.pe.imphash": {
+      "data_type": "varchar",
+      "description": "Import hash from PE metadata."
+    },
+    "file.pe.original_file_name": {
+      "data_type": "varchar",
+      "description": "Original file name from PE metadata."
+    },
+    "file.pe.product": {
+      "data_type": "varchar",
+      "description": "Product name from PE metadata."
+    },
+    "file.permissions": {
+      "data_type": "varchar",
+      "description": "File permissions."
+    },
+    "file.size": {
+      "data_type": "integer",
+      "description": "Size of the file in bytes."
+    },
+    "file.type": {
+      "data_type": "varchar",
+      "description": "Type of the file (e.g., 'executable', 'archive')."
+    },
+    "file.x509": {
+      "data_type": "varchar",
+      "description": "x509 certificate information relating to the file."
+    },
+    "geo.city_name": {
+      "data_type": "varchar",
+      "description": "Name of the city related to the geo location."
+    },
+    "geo.continent_code": {
+      "data_type": "varchar",
+      "description": "Code of the continent (e.g., 'NA' for North America)."
+    },
+    "geo.continent_name": {
+      "data_type": "varchar",
+      "description": "Name of the continent."
+    },
+    "geo.country_code": {
+      "data_type": "varchar",
+      "description": "Country code as per ISO (e.g., 'US')."
+    },
+    "geo.country_iso_code": {
+      "data_type": "varchar",
+      "description": "ISO code for the country."
+    },
+    "geo.country_name": {
+      "data_type": "varchar",
+      "description": "Country name."
+    },
+    "geo.location": {
+      "data_type": "varchar",
+      "description": "Geo point location (latitude and longitude)."
+    },
+    "geo.location.lat": {
+      "data_type": "double",
+      "description": "Latitude coordinate."
+    },
+    "geo.location.lon": {
+      "data_type": "double",
+      "description": "Longitude coordinate."
+    },
+    "geo.name": {
+      "data_type": "varchar",
+      "description": "Name or label for the location."
+    },
+    "geo.region_iso_code": {
+      "data_type": "varchar",
+      "description": "ISO code for the region or state."
+    },
+    "geo.region_name": {
+      "data_type": "varchar",
+      "description": "Name of the region or state."
+    },
+    "host.address": {
+      "data_type": "varchar",
+      "description": "IP address of the host."
+    },
+    "host.architecture": {
+      "data_type": "varchar",
+      "description": "Host machine architecture (e.g., x86_64)."
+    },
+    "host.asset_id": {
+      "data_type": "varchar",
+      "description": "Identifier of the host asset in inventory/service management."
+    },
+    "host.description": {
+      "data_type": "varchar",
+      "description": "Description or additional info about the host."
+    },
+    "host.domain": {
+      "data_type": "varchar",
+      "description": "Domain name the host belongs to."
+    },
+    "host.hostname": {
+      "data_type": "varchar",
+      "description": "Hostname of the device."
+    },
+    "host.id": {
+      "data_type": "varchar",
+      "description": "Unique host identifier."
+    },
+    "host.ip": {
+      "data_type": "varchar",
+      "description": "IP address assigned to the host."
+    },
+    "host.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the host network interface."
+    },
+    "host.name": {
+      "data_type": "varchar",
+      "description": "Name of the host."
+    },
+    "host.os.name": {
+      "data_type": "varchar",
+      "description": "Operating system name of the host."
+    },
+    "host.os.platform": {
+      "data_type": "varchar",
+      "description": "Operating system platform (e.g., windows, linux)."
+    },
+    "host.os.type": {
+      "data_type": "varchar",
+      "description": "Generalized OS type."
+    },
+    "host.os.version": {
+      "data_type": "varchar",
+      "description": "Operating system version."
+    },
+    "host.port": {
+      "data_type": "varchar",
+      "description": "Port associated with the host."
+    },
+    "host.type": {
+      "data_type": "varchar",
+      "description": "Type of host (e.g., server, workstation)."
+    },
+    "log.level": {
+      "data_type": "varchar",
+      "description": "Severity level of the log (e.g., 'info', 'error')."
+    },
+    "message": {
+      "data_type": "varchar",
+      "description": "Main event message or description."
+    },
+    "network.application": {
+      "data_type": "varchar",
+      "description": "Name of the network application protocol."
+    },
+    "network.bytes": {
+      "data_type": "integer",
+      "description": "Total bytes transferred on the network."
+    },
+    "network.community_id": {
+      "data_type": "varchar",
+      "description": "Community identifier used for network tracking."
+    },
+    "network.direction": {
+      "data_type": "varchar",
+      "description": "Traffic direction (e.g., 'inbound' or 'outbound')."
+    },
+    "network.iana_number": {
+      "data_type": "integer",
+      "description": "IANA-assigned protocol number (e.g., 6 for TCP)."
+    },
+    "network.ip.version": {
+      "data_type": "varchar",
+      "description": "IP version (e.g., '4' for IPv4, '6' for IPv6)."
+    },
+    "network.name": {
+      "data_type": "varchar",
+      "description": "Name of the network."
+    },
+    "network.packets": {
+      "data_type": "integer",
+      "description": "Number of packets transferred."
+    },
+    "network.protocol": {
+      "data_type": "varchar",
+      "description": "Network protocol (e.g., 'tcp', 'udp')."
+    },
+    "network.transport": {
+      "data_type": "varchar",
+      "description": "Transport layer protocol."
+    },
+    "network.vlan.id": {
+      "data_type": "varchar",
+      "description": "VLAN identifier, if applicable."
+    },
+    "network.vlan.name": {
+      "data_type": "varchar",
+      "description": "VLAN name."
+    },
+    "observer.as.number": {
+      "data_type": "varchar",
+      "description": "Autonomous System (AS) number of the observer."
+    },
+    "observer.as.organization.name": {
+      "data_type": "varchar",
+      "description": "Name of the organization owning the AS of the observer."
+    },
+    "observer.geo.city_name": {
+      "data_type": "varchar",
+      "description": "City name of the observer location."
+    },
+    "observer.geo.continent_code": {
+      "data_type": "varchar",
+      "description": "Continent code for observer location."
+    },
+    "observer.geo.country_code": {
+      "data_type": "varchar",
+      "description": "Country code of observer location."
+    },
+    "observer.geo.country_name": {
+      "data_type": "varchar",
+      "description": "Country name of observer location."
+    },
+    "observer.geo.location.lat": {
+      "data_type": "double",
+      "description": "Latitude coordinate of observer location."
+    },
+    "observer.geo.location.lon": {
+      "data_type": "double",
+      "description": "Longitude coordinate of observer location."
+    },
+    "observer.geo.region_name": {
+      "data_type": "varchar",
+      "description": "Name of the region for the observer."
+    },
+    "observer.hostname": {
+      "data_type": "varchar",
+      "description": "Hostname of the observer system."
+    },
+    "observer.ingress.interface.name": {
+      "data_type": "varchar",
+      "description": "Name of the ingress network interface on observer."
+    },
+    "observer.ip": {
+      "data_type": "varchar",
+      "description": "IP address of the observer."
+    },
+    "observer.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the observer."
+    },
+    "observer.name": {
+      "data_type": "varchar",
+      "description": "Name of the observer (generic)."
+    },
+    "observer.os.version": {
+      "data_type": "varchar",
+      "description": "OS version of the observer system."
+    },
+    "observer.product": {
+      "data_type": "varchar",
+      "description": "Product name of the observer system."
+    },
+    "observer.serial_number": {
+      "data_type": "varchar",
+      "description": "Serial number of the observer hardware."
+    },
+    "observer.type": {
+      "data_type": "varchar",
+      "description": "Type of the observer (e.g., sensor, router)."
+    },
+    "observer.vendor": {
+      "data_type": "varchar",
+      "description": "Vendor of the observer hardware/software."
+    },
+    "observer.version": {
+      "data_type": "varchar",
+      "description": "Version of the observer software."
+    },
+    "organization.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the organization."
+    },
+    "organization.name": {
+      "data_type": "varchar",
+      "description": "Name of the organization."
+    },
+    "process.args": {
+      "data_type": "varchar",
+      "description": "Process command-line arguments."
+    },
+    "process.args_count": {
+      "data_type": "varchar",
+      "description": "Number of command-line arguments."
+    },
+    "process.command_line": {
+      "data_type": "varchar",
+      "description": "Full command line of the process."
+    },
+    "process.end": {
+      "data_type": "varchar",
+      "description": "Timestamp or time when the process ended."
+    },
+    "process.entity_id": {
+      "data_type": "varchar",
+      "description": "Unique identifier of the process instance/entity."
+    },
+    "process.executable": {
+      "data_type": "varchar",
+      "description": "Path or name of the executable file of the process."
+    },
+    "process.exit_code": {
+      "data_type": "varchar",
+      "description": "Exit code returned when the process ended."
+    },
+    "process.hash.imphash": {
+      "data_type": "varchar",
+      "description": "Import hash related to the process executable."
+    },
+    "process.hash.md5": {
+      "data_type": "varchar",
+      "description": "MD5 hash of the process executable."
+    },
+    "process.hash.sha1": {
+      "data_type": "varchar",
+      "description": "SHA1 hash of the process executable."
+    },
+    "process.hash.sha256": {
+      "data_type": "varchar",
+      "description": "SHA256 hash of the process executable."
+    },
+    "process.id": {
+      "data_type": "varchar",
+      "description": "Process identifier (e.g., PID)."
+    },
+    "process.integrity_level": {
+      "data_type": "varchar",
+      "description": "Integrity level of the process (e.g., low, medium, high)."
+    },
+    "process.name": {
+      "data_type": "varchar",
+      "description": "Name of the process."
+    },
+    "process.parent.args": {
+      "data_type": "varchar",
+      "description": "Command-line arguments of the parent process."
+    },
+    "process.parent.command_line": {
+      "data_type": "varchar",
+      "description": "Full command line of the parent process."
+    },
+    "process.parent.entity_id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the parent process."
+    },
+    "process.parent.executable": {
+      "data_type": "varchar",
+      "description": "Executable file path/name of the parent process."
+    },
+    "process.parent.hash.md5": {
+      "data_type": "varchar",
+      "description": "MD5 hash of the parent process executable."
+    },
+    "process.parent.hash.sha1": {
+      "data_type": "varchar",
+      "description": "SHA1 hash of the parent process executable."
+    },
+    "process.parent.hash.sha256": {
+      "data_type": "varchar",
+      "description": "SHA256 hash of the parent process executable."
+    },
+    "process.parent.name": {
+      "data_type": "varchar",
+      "description": "Name of the parent process."
+    },
+    "process.parent.pid": {
+      "data_type": "integer",
+      "description": "Process ID of the parent process."
+    },
+    "process.parent.start": {
+      "data_type": "varchar",
+      "description": "Start time of the parent process."
+    },
+    "process.path": {
+      "data_type": "varchar",
+      "description": "Path of the executable for the process."
+    },
+    "process.pe.company": {
+      "data_type": "varchar",
+      "description": "PE binary company name."
+    },
+    "process.pe.description": {
+      "data_type": "varchar",
+      "description": "PE binary description."
+    },
+    "process.pe.file_version": {
+      "data_type": "varchar",
+      "description": "PE binary file version."
+    },
+    "process.pe.imphash": {
+      "data_type": "varchar",
+      "description": "PE import hash."
+    },
+    "process.pe.original_file_name": {
+      "data_type": "varchar",
+      "description": "Original file name in PE metadata."
+    },
+    "process.pe.product": {
+      "data_type": "varchar",
+      "description": "PE product name."
+    },
+    "process.pid": {
+      "data_type": "varchar",
+      "description": "Process identifier (another type)."
+    },
+    "process.ppid": {
+      "data_type": "integer",
+      "description": "Parent process identifier."
+    },
+    "process.start": {
+      "data_type": "varchar",
+      "description": "Timestamp when the process started."
+    },
+    "process.thread.id": {
+      "data_type": "varchar",
+      "description": "Thread identifier within the process."
+    },
+    "process.title": {
+      "data_type": "varchar",
+      "description": "Title of the process or window."
+    },
+    "process.tty": {
+      "data_type": "varchar",
+      "description": "TTY or terminal associated with the process."
+    },
+    "process.user.domain": {
+      "data_type": "varchar",
+      "description": "Domain of the user who owned the process."
+    },
+    "process.user.name": {
+      "data_type": "varchar",
+      "description": "Username of the user who owned the process."
+    },
+    "process.working_directory": {
+      "data_type": "varchar",
+      "description": "Working directory at the time the process started."
+    },
+    "related.hashes": {
+      "data_type": "array(varchar)",
+      "description": "Array of hashes related to the event."
+    },
+    "related.hosts": {
+      "data_type": "array(varchar)",
+      "description": "Array of related hostnames or host IDs."
+    },
+    "related.ip": {
+      "data_type": "array(varchar)",
+      "description": "Array of related IP addresses."
+    },
+    "related.user": {
+      "data_type": "array(varchar)",
+      "description": "Array of related users."
+    },
+    "rule.action": {
+      "data_type": "varchar",
+      "description": "Action taken by the detection or rule (e.g., allow, block)."
+    },
+    "rule.author": {
+      "data_type": "varchar",
+      "description": "Author of the rule."
+    },
+    "rule.category": {
+      "data_type": "varchar",
+      "description": "Category of the detection or rule (e.g., 'malware', 'bruteforce')."
+    },
+    "rule.classification": {
+      "data_type": "varchar",
+      "description": "Classification related to the rule."
+    },
+    "rule.description": {
+      "data_type": "varchar",
+      "description": "Textual description of the rule."
+    },
+    "rule.group.id": {
+      "data_type": "varchar",
+      "description": "Group identifier for the rule."
+    },
+    "rule.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier of the rule."
+    },
+    "rule.license": {
+      "data_type": "varchar",
+      "description": "License information for the rule."
+    },
+    "rule.name": {
+      "data_type": "varchar",
+      "description": "Name of the rule."
+    },
+    "rule.policy": {
+      "data_type": "varchar",
+      "description": "Policy name the rule belongs to."
+    },
+    "rule.reference": {
+      "data_type": "varchar",
+      "description": "External references linked to the rule."
+    },
+    "rule.ruleset": {
+      "data_type": "varchar",
+      "description": "Collection or ruleset the rule belongs to."
+    },
+    "rule.severity": {
+      "data_type": "varchar",
+      "description": "Severity level of the rule."
+    },
+    "rule.uuid": {
+      "data_type": "varchar",
+      "description": "UUID of the rule."
+    },
+    "rule.version": {
+      "data_type": "varchar",
+      "description": "Version of the rule."
+    },
+    "server.address": {
+      "data_type": "varchar",
+      "description": "IP address of the server."
+    },
+    "server.domain": {
+      "data_type": "varchar",
+      "description": "Domain of the server."
+    },
+    "server.id": {
+      "data_type": "varchar",
+      "description": "Server unique identifier."
+    },
+    "server.ip": {
+      "data_type": "varchar",
+      "description": "IP address assigned to the server."
+    },
+    "server.nat.ip": {
+      "data_type": "varchar",
+      "description": "NAT IP used by the server."
+    },
+    "server.nat.port": {
+      "data_type": "varchar",
+      "description": "NAT port used by the server."
+    },
+    "server.port": {
+      "data_type": "integer",
+      "description": "Port number on the server."
+    },
+    "server.user.name": {
+      "data_type": "varchar",
+      "description": "Username associated with server activity."
+    },
+    "service.address": {
+      "data_type": "varchar",
+      "description": "Address of the service (could be IP or hostname)."
+    },
+    "service.id": {
+      "data_type": "varchar",
+      "description": "Identifier for the service."
+    },
+    "service.name": {
+      "data_type": "varchar",
+      "description": "Name of the service."
+    },
+    "service.port": {
+      "data_type": "integer",
+      "description": "Network port used by the service."
+    },
+    "service.state": {
+      "data_type": "varchar",
+      "description": "Current state of the service (e.g., running, stopped)."
+    },
+    "service.status": {
+      "data_type": "varchar",
+      "description": "Status of the service."
+    },
+    "service.type": {
+      "data_type": "varchar",
+      "description": "Type of the service (e.g., web, database)."
+    },
+    "service.version": {
+      "data_type": "varchar",
+      "description": "Version of the service."
+    },
+    "source.address": {
+      "data_type": "varchar",
+      "description": "Address of the source of the network traffic or event."
+    },
+    "source.bytes": {
+      "data_type": "integer",
+      "description": "Number of bytes transferred from the source."
+    },
+    "source.domain": {
+      "data_type": "varchar",
+      "description": "Domain name associated with the source."
+    },
+    "source.hostname": {
+      "data_type": "varchar",
+      "description": "Hostname of the source device."
+    },
+    "source.ip": {
+      "data_type": "varchar",
+      "description": "IP address of the source."
+    },
+    "source.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the source device."
+    },
+    "source.nat.ip": {
+      "data_type": "varchar",
+      "description": "NAT IP address for source, if applicable."
+    },
+    "source.nat.port": {
+      "data_type": "integer",
+      "description": "NAT port number for source."
+    },
+    "source.packets": {
+      "data_type": "varchar",
+      "description": "Number of packets sent from source."
+    },
+    "source.port": {
+      "data_type": "integer",
+      "description": "Network port of the source."
+    },
+    "source.registered_domain": {
+      "data_type": "varchar",
+      "description": "Registered domain name of the source."
+    },
+    "source.service.name": {
+      "data_type": "varchar",
+      "description": "Name of the service on source."
+    },
+    "source.software.original": {
+      "data_type": "varchar",
+      "description": "Original software name running on the source device."
+    },
+    "source.user.domain": {
+      "data_type": "varchar",
+      "description": "Domain name of the source user."
+    },
+    "source.user.email": {
+      "data_type": "varchar",
+      "description": "Email address of the source user."
+    },
+    "source.user.group.name": {
+      "data_type": "varchar",
+      "description": "Group name of the source user."
+    },
+    "source.user.id": {
+      "data_type": "varchar",
+      "description": "Unique identifier for the source user."
+    },
+    "source.user.mac": {
+      "data_type": "varchar",
+      "description": "MAC address of the source user."
+    },
+    "source.user.name": {
+      "data_type": "varchar",
+      "description": "Username of the source user."
+    },
+    "source.user.roles": {
+      "data_type": "varchar",
+      "description": "Roles or privileges assigned to the source user."
+    },
+    "tls.cipher": {
+      "data_type": "varchar",
+      "description": "TLS cipher used in the connection."
+    },
+    "tls.cipher_suite": {
+      "data_type": "varchar",
+      "description": "TLS cipher suite name."
+    },
+    "tls.client.issuer": {
+      "data_type": "varchar",
+      "description": "Distinguished name of the client's certificate issuer."
+    },
+    "tls.client.ja3": {
+      "data_type": "varchar",
+      "description": "JA3 fingerprint of the TLS client."
+    },
+    "tls.client.server_name": {
+      "data_type": "varchar",
+      "description": "Server Name Indication (SNI) from TLS client."
+    },
+    "tls.server.ja3s": {
+      "data_type": "varchar",
+      "description": "JA3S fingerprint of the TLS server."
+    },
+    "tls.server.x509.subject_common_name": {
+      "data_type": "varchar",
+      "description": "Common Name (CN) from the TLS server's x509 certificate subject."
+    },
+    "tls.version": {
+      "data_type": "varchar",
+      "description": "Version of the TLS protocol used (e.g., TLS 1.2)."
+    },
+    "uri.original": {
+      "data_type": "varchar",
+      "description": "Original URI captured in the event."
+    },
+    "url.domain": {
+      "data_type": "varchar",
+      "description": "Domain part of the URL."
+    },
+    "url.extension": {
+      "data_type": "varchar",
+      "description": "File extension from the URL path."
+    },
+    "url.full": {
+      "data_type": "varchar",
+      "description": "Full URL string."
+    },
+    "url.host": {
+      "data_type": "varchar",
+      "description": "Host component of the URL."
+    },
+    "url.original": {
+      "data_type": "varchar",
+      "description": "Original, unmodified URL."
+    },
+    "url.path": {
+      "data_type": "varchar",
+      "description": "Path component of the URL."
+    },
+    "url.port": {
+      "data_type": "integer",
+      "description": "Port number referenced in the URL."
+    },
+    "url.query": {
+      "data_type": "varchar",
+      "description": "Query string of the URL."
+    },
+    "url.scheme": {
+      "data_type": "varchar",
+      "description": "URL scheme or protocol (e.g., http, https)."
+    },
+    "url.subdomain": {
+      "data_type": "varchar",
+      "description": "Subdomain part of the URL domain."
+    },
+    "user.agent": {
+      "data_type": "varchar",
+      "description": "User-agent string of the client browser or application."
+    },
+    "user.domain": {
+      "data_type": "varchar",
+      "description": "Domain the user belongs to."
+    },
+    "user.effective.domain": {
+      "data_type": "varchar",
+      "description": "Effective domain of the user (in case of impersonation or delegation)."
+    },
+    "user.effective.group.id": {
+      "data_type": "varchar",
+      "description": "Effective group ID of the user."
+    },
+    "user.effective.id": {
+      "data_type": "varchar",
+      "description": "Effective user ID when impersonation is involved."
+    },
+    "user.effective.name": {
+      "data_type": "varchar",
+      "description": "Effective username."
+    },
+    "user.email": {
+      "data_type": "varchar",
+      "description": "Email address of the user."
+    },
+    "user.group.email": {
+      "data_type": "array(varchar)",
+      "description": "Array of email addresses of groups the user belongs to."
+    },
+    "user.group.id": {
+      "data_type": "array(varchar)",
+      "description": "Array of group IDs associated with the user."
+    },
+    "user.id": {
+      "data_type": "varchar",
+      "description": "Unique user identifier."
+    },
+    "user.name": {
+      "data_type": "varchar",
+      "description": "Username."
+    },
+    "user.roles": {
+      "data_type": "varchar",
+      "description": "Roles assigned to the user."
+    },
+    "user.type": {
+      "data_type": "varchar",
+      "description": "Type of user account (e.g., 'administrator', 'user')."
+    },
+    "user_agent.name": {
+      "data_type": "varchar",
+      "description": "Name of the user agent (browser or application)."
+    },
+    "user_agent.original": {
+      "data_type": "varchar",
+      "description": "Original user agent string captured."
+    }
+  }

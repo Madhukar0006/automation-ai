@@ -1,0 +1,588 @@
+{
+  "ads": [
+    {
+      "vendor": "blusapphire",
+      "product": "ads",
+      "standard_name": "blusapphire_ads"
+    }
+  ],
+  "auth": [
+    {
+      "vendor": "cisco",
+      "product": "duo",
+      "standard_name": "cisco_duo"
+    },
+    {
+      "vendor": "onelogin",
+      "product": "onelogin",
+      "standard_name": "onelogin"
+    }
+  ],
+  "cloud-aws": [
+    {
+      "vendor": "aws",
+      "product": "cloudtrail",
+      "standard_name": "aws_cloudtrail"
+    },
+    {
+      "vendor": "aws",
+      "product": "cloudtrail-digest",
+      "standard_name": "aws_cloudtrail"
+    },
+    {
+      "vendor": "aws",
+      "product": "elb",
+      "standard_name": "aws_elb"
+    },
+    {
+      "vendor": "aws",
+      "product": "guardduty",
+      "standard_name": "aws_guardduty"
+    },
+    {
+      "vendor": "aws",
+      "product": "lambda",
+      "standard_name": "aws_cloudwatch"
+    },
+    {
+      "vendor": "aws",
+      "product": "rds",
+      "standard_name": "aws"
+    },
+    {
+      "vendor": "aws",
+      "product": "transit-gateway",
+      "standard_name": "aws_transitgateway"
+    },
+    {
+      "vendor": "aws",
+      "product": "vpcflow",
+      "standard_name": "aws_vpcflow"
+    },
+    {
+      "vendor": "aws",
+      "product": "waf",
+      "standard_name": "aws_waf"
+    }
+  ],
+  "cloud-azure": [
+    {
+      "vendor": "microsoft",
+      "product": "application-gateway",
+      "standard_name": "azure_application_gateway"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "identity-protection",
+      "standard_name": "azure_identity_protection"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "activitylogs",
+      "standard_name": "azure_activitylogs"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "signinlogs",
+      "standard_name": "azure_signinlogs"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "auditlogs",
+      "standard_name": "azure_auditlogs"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "o365",
+      "standard_name": "o365_audit"
+    }
+  ],
+  "cloud-gcp": [
+    {
+      "vendor": "gcp",
+      "product": "loadbalancer",
+      "standard_name": "gcp_loadbalancer"
+    }
+  ],
+  "db": [
+    {
+      "vendor": "microsoft",
+      "product": "sqlserver",
+      "standard_name": "microsoft_sqlserver"
+    },
+    {
+      "vendor": "oracle",
+      "product": "mysql",
+      "standard_name": "mysql_enterprise"
+    },
+    {
+      "vendor": "oracle",
+      "product": "database",
+      "standard_name": "oracle_database"
+    },
+    {
+      "vendor": "postgresql",
+      "product": "database",
+      "standard_name": "postgresql_database"
+    }
+  ],
+  "dhcp": [
+    {
+      "vendor": "microsoft",
+      "product": "dhcp",
+      "standard_name": "microsoft_dhcp"
+    }
+  ],
+  "deception": [
+    {
+      "vendor": "zscaler",
+      "product": "deception",
+      "standard_name": "zscaler_deception"
+    }
+  ],
+  "edr": [
+    {
+      "vendor": "blusapphire",
+      "product": "oneagent",
+      "standard_name": "blusapphire_oneagent"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "sysmon",
+      "standard_name": "epp"
+    }
+  ],
+  "epp": [
+    {
+      "vendor": "checkpoint",
+      "product": "ngav",
+      "standard_name": "checkpoint_ngav"
+    },
+    {
+      "vendor": "checkpoint",
+      "product": "harmony-endpoint",
+      "standard_name": "checkpoint_harmony_endpoint"
+    },
+    {
+      "vendor": "crowdstrike",
+      "product": "falcon",
+      "standard_name": "crowdstrike_falcon"
+    },
+    {
+      "vendor": "cyber20",
+      "product": "cyber20-it",
+      "standard_name": "cyber20_it"
+    },
+    {
+      "vendor": "kaspersky",
+      "product": "antivirus",
+      "standard_name": "kaspersky_antivirus"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "defender-cloud",
+      "standard_name": "defender_cloud"
+    },
+    {
+      "vendor": "microsoft",
+      "product": "defender-endpoint",
+      "standard_name": "defender_endpoint"
+    },
+    {
+      "vendor": "sentinelone",
+      "product": "sentinelone",
+      "standard_name": "sentinel_one"
+    },
+    {
+      "vendor": "seqrite",
+      "product": "antivirus",
+      "standard_name": "seqrite_antivirus"
+    },
+    {
+      "vendor": "sophos",
+      "product": "intercept-x",
+      "standard_name": "sophos_interceptx"
+    },
+    {
+      "vendor": "sophos",
+      "product": "central",
+      "standard_name": "sophos_central"
+    },
+    {
+      "vendor": "symantec",
+      "product": "epp",
+      "standard_name": "symantec_epp"
+    },
+    {
+      "vendor": "trendmicro",
+      "product": "deep-security",
+      "standard_name": "trendmicro_deep_security"
+    },
+    {
+      "vendor": "trendmicro",
+      "product": "apex-central",
+      "standard_name": "trendmicro_apex_central"
+    }
+  ],
+  "erp": [
+    {
+      "vendor": "zoho",
+      "product": "analytics",
+      "standard_name": "zoho_analytics"
+    },
+    {
+      "vendor": "zoho",
+      "product": "vault",
+      "standard_name": "zoho_vault"
+    }
+  ],
+  "ips": [
+    {
+      "vendor": "paf",
+      "product": "paf",
+      "standard_name": "paf_alerts"
+    }
+  ],
+  "linux": [
+    {
+      "vendor": "cisco",
+      "product": "rms",
+      "standard_name": "cisco_rms"
+    },
+    {
+      "vendor": "dell",
+      "product": "rms",
+      "standard_name": "dell_rms"
+    },
+    {
+      "vendor": "hpe",
+      "product": "rms",
+      "standard_name": "hpe_rms"
+    },
+    {
+      "vendor": "ibm",
+      "product": "rms",
+      "standard_name": "ibm_rms"
+    },
+    {
+      "vendor": "lenovo",
+      "product": "rms",
+      "standard_name": "lenovo_rms"
+    },
+    {
+      "vendor": "linux",
+      "product": "syslog",
+      "standard_name": "linux_syslog"
+    },
+    {
+      "vendor": "linux",
+      "product": "auditd",
+      "standard_name": "linux_auditd"
+    }
+  ],
+  "mdm": [
+    {
+      "vendor": "microsoft",
+      "product": "intune",
+      "standard_name": "microsoft_intune"
+    }
+  ],
+  "nac": [
+    {
+      "vendor": "cisco",
+      "product": "ise",
+      "standard_name": "cisco_ise"
+    }
+  ],
+  "nas": [
+    {
+      "vendor": "ibm",
+      "product": "storwize",
+      "standard_name": "ibm_storwize"
+    },
+    {
+      "vendor": "dell",
+      "product": "cloudiq",
+      "standard_name": "dell_cloudiq"
+    },
+    {
+      "vendor": "lenovo",
+      "product": "storage",
+      "standard_name": "lenovo_storage"
+    },
+    {
+      "vendor": "qnap",
+      "product": "nas",
+      "standard_name": "qnap_nas"
+    }
+  ],
+  "nbad": [
+    {
+      "vendor": "blusapphire",
+      "product": "naf",
+      "standard_name": "nbad"
+    }
+  ],
+  "network": [
+    {
+      "vendor": "brocade",
+      "product": "switch",
+      "standard_name": "brocade_switch"
+    },
+    {
+      "vendor": "cisco",
+      "product": "fabric_controller",
+      "standard_name": "cisco_fabric_controller"
+    },
+    {
+      "vendor": "cisco",
+      "product": "ios",
+      "standard_name": "cisco_ios"
+    },
+    {
+      "vendor": "cisco-meraki",
+      "product": "switch",
+      "standard_name": "cisco_meraki"
+    },
+    {
+      "vendor": "dell",
+      "product": "switch",
+      "standard_name": "dell_powerswitch"
+    },
+    {
+      "vendor": "hpe",
+      "product": "switch",
+      "standard_name": "hpe_aruba_switch"
+    },
+    {
+      "vendor": "lenovo",
+      "product": "switch",
+      "standard_name": "lenovo_switch"
+    },
+    {
+      "vendor": "ruckus",
+      "product": "switch",
+      "standard_name": "ruckus_switch"
+    }
+  ],
+  "ngfw": [
+    {
+      "vendor": "barracuda",
+      "product": "cloudgen",
+      "standard_name": "cloudgen_firewall"
+    },
+    {
+      "vendor": "checkpoint",
+      "product": "smartdefence/firewall",
+      "standard_name": "checkpoint_firewall"
+    },
+    {
+      "vendor": "cisco",
+      "product": "asa",
+      "standard_name": "cisco_asa"
+    },
+    {
+      "vendor": "cisco",
+      "product": "ftd",
+      "standard_name": "cisco_ftd"
+    },
+    {
+      "vendor": "cisco",
+      "product": "meraki-firewall",
+      "standard_name": "cisco_meraki"
+    },
+    {
+      "vendor": "cradlepoint",
+      "product": "firewall",
+      "standard_name": "cradlepoint_firewall"
+    },
+    {
+      "vendor": "eagle",
+      "product": "firewall",
+      "standard_name": "eagle_firewall"
+    },
+    {
+      "vendor": "fortinet",
+      "product": "fortianalyzer",
+      "standard_name": "fortinet_fortianalyzer"
+    },
+    {
+      "vendor": "fortinet",
+      "product": "fortigate",
+      "standard_name": "fortinet_fortigate"
+    },
+    {
+      "vendor": "fortinet",
+      "product": "fortimanager",
+      "standard_name": "fortinet_fortimanager"
+    },
+    {
+      "vendor": "cisco",
+      "product": "fmc",
+      "standard_name": "cisco_fmc"
+    },
+    {
+      "vendor": "netxgate",
+      "product": "firewall",
+      "standard_name": "netxgate_firewall"
+    },
+    {
+      "vendor": "paloalto",
+      "product": "pan-os",
+      "standard_name": "paloalto_firewall"
+    },
+    {
+      "vendor": "sonicwall",
+      "product": "firewall",
+      "standard_name": "sonicwall_firewall"
+    },
+    {
+      "vendor": "sophos",
+      "product": "XG",
+      "standard_name": "sophos_xg"
+    },
+    {
+      "vendor": "tacitine",
+      "product": "firewall",
+      "standard_name": "tacitine_firewall"
+    }
+  ],
+  "proxy-mail": [
+    {
+      "vendor": "cisco",
+      "product": "secure-email-gateway",
+      "standard_name": "cisco_secure_email_gateway"
+    },
+    {
+      "vendor": "mimecast",
+      "product": "email-security",
+      "standard_name": "mimecast_email_security"
+    },
+    {
+      "vendor": "proofpoint",
+      "product": "on-demand-email-security",
+      "standard_name": "proofpoint_on_demand"
+    },
+    {
+      "vendor": "proofpoint",
+      "product": "target-attack-protection",
+      "standard_name": "proofpoint_tap"
+    }
+  ],
+  "proxy-web": [
+    {
+      "vendor": "forcepoint",
+      "product": "web-security",
+      "standard_name": "forcepoint_web"
+    },
+    {
+      "vendor": "barracuda",
+      "product": "waf",
+      "standard_name": "barracuda_waf"
+    },
+    {
+      "vendor": "zscaler",
+      "product": "zia",
+      "standard_name": "zscaler_zia"
+    }
+  ],
+  "ra": [
+    {
+      "vendor": "pulse-secure",
+      "product": "pulse-secure-connect",
+      "standard_name": "pulse_secure"
+    }
+  ],
+  "virtual": [
+    {
+      "vendor": "nutanix",
+      "product": "hci",
+      "standard_name": "nutanix_hci"
+    },
+    {
+      "vendor": "vmware",
+      "product": "esxi",
+      "standard_name": "vmware_esxi"
+    },
+    {
+      "vendor": "vmware",
+      "product": "vcenter",
+      "standard_name": "vmware_vcenter"
+    },
+    {
+      "vendor": "vmware",
+      "product": "hci",
+      "standard_name": "vmware_hci"
+    }
+  ],
+  "webserver": [
+    {
+      "vendor": "microsoft",
+      "product": "iis(access , error)",
+      "standard_name": "microsoft_iis"
+    },
+    {
+      "vendor": "apache",
+      "product": "tomacat",
+      "standard_name": "apache_tomcat"
+    },
+    {
+      "vendor": "nginx",
+      "product": "access",
+      "standard_name": "nginx_access"
+    },
+    {
+      "vendor": "nginx",
+      "product": "error",
+      "standard_name": "nginx_error"
+    },
+    {
+      "vendor": "apache",
+      "product": "apache(access)",
+      "standard_name": "apache_access"
+    },
+    {
+      "vendor": "apache",
+      "product": "apache(error)",
+      "standard_name": "apache_error"
+    }
+  ],
+  "windows": [
+    {
+      "vendor": "microsoft",
+      "product": "windows",
+      "standard_name": "winevtlogs",
+      "log_types": [
+        "application",
+        "defender",
+        "powershell",
+        "security",
+        "system",
+        "taskscheduler",
+        "wmiactivity"
+      ]
+    }
+  ],
+  "wireless": [
+    {
+      "vendor": "cisco",
+      "product": "meraki(access-point)",
+      "standard_name": "cisco_meraki_access_point"
+    },
+    {
+      "vendor": "cisco",
+      "product": "catalyst_center(dnac)",
+      "standard_name": "cisco_dnac"
+    },
+    {
+      "vendor": "hp-aruba",
+      "product": "access-controller",
+      "standard_name": "hpe_wireless"
+    },
+    {
+      "vendor": "ruckus",
+      "product": "controller",
+      "standard_name": "ruckus_wireless"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "patterns": {
+    "apache_access": {
+      "pattern": "^%{IP:client_ip} - - \\[%{HTTPDATE:timestamp}\\] \"%{WORD:verb} %{DATA:request} HTTP/%{NUMBER:http_version}\" %{NUMBER:response_code} %{NUMBER:bytes} \"%{DATA:referer}\" \"%{DATA:user_agent}\"(?:%{GREEDYDATA:all})?",
+      "description": "Apache access log format",
+      "priority": 1,
+      "vendor": "apache",
+      "product": "httpd"
+    },
+    "apache_access_simple": {
+      "pattern": "^%{IP:client_ip} - - \\[%{HTTPDATE:timestamp}\\] \"%{WORD:verb} %{DATA:request} HTTP/%{NUMBER:http_version}\" %{NUMBER:response_code} %{NUMBER:bytes} \"%{DATA:referer}\" \"%{DATA:user_agent}\" %{GREEDYDATA:all}",
+      "description": "Apache access log format (simple)",
+      "priority": 1,
+      "vendor": "apache",
+      "product": "httpd"
+    },
+    "apache_access_combined": {
+      "pattern": "^%{IP:client_ip} - - \\[%{HTTPDATE:timestamp}\\] \"%{WORD:verb} %{DATA:request} HTTP/%{NUMBER:http_version}\" %{NUMBER:response_code} %{NUMBER:bytes} \"%{DATA:referer}\" \"%{DATA:user_agent}\"(?:%{GREEDYDATA:all})?",
+      "description": "Apache combined access log format",
+      "priority": 2,
+      "vendor": "apache",
+      "product": "httpd"
+    },
+    "nginx_access": {
+      "pattern": "^%{IP:client_ip} - - \\[%{HTTPDATE:timestamp}\\] \"%{WORD:verb} %{DATA:request} HTTP/%{NUMBER:http_version}\" %{NUMBER:response_code} %{NUMBER:bytes} \"%{DATA:referer}\" \"%{DATA:user_agent}\" \"%{DATA:forwarded_for}\"(?:%{GREEDYDATA:all})?",
+      "description": "Nginx access log format",
+      "priority": 1,
+      "vendor": "nginx",
+      "product": "nginx"
+    },
+    "cisco_asa": {
+      "pattern": "^%ASA-%{NUMBER:severity}-%{NUMBER:message_id}: %{DATA:action} %{WORD:protocol} connection %{NUMBER:connection_id} for %{DATA:src_interface}:%{IP:src_ip}/%{NUMBER:src_port} to %{DATA:dst_interface}:%{IP:dst_ip}/%{NUMBER:dst_port}(?:%{GREEDYDATA:all})?",
+      "description": "Cisco ASA firewall log",
+      "priority": 1,
+      "vendor": "cisco",
+      "product": "asa"
+    },
+    "cisco_asa_denied": {
+      "pattern": "^%ASA-%{NUMBER:severity}-%{NUMBER:message_id}: %{DATA:action} %{WORD:protocol} from %{IP:src_ip}/%{NUMBER:src_port} to %{IP:dst_ip}/%{NUMBER:dst_port} on interface %{DATA:interface}(?:%{GREEDYDATA:all})?",
+      "description": "Cisco ASA denied connection log",
+      "priority": 1,
+      "vendor": "cisco",
+      "product": "asa"
+    },
+    "fortinet_fortigate": {
+      "pattern": "^%{DATA:date} %{TIME:time} %{DATA:device_id} %{WORD:type}: %{DATA:subtype} %{WORD:action} %{WORD:policyid} %{WORD:srcintf} %{WORD:dstintf} %{IP:src_ip} %{IP:dst_ip} %{NUMBER:src_port} %{NUMBER:dst_port} %{WORD:protocol}(?:%{GREEDYDATA:all})?",
+      "description": "Fortinet FortiGate firewall log",
+      "priority": 1,
+      "vendor": "fortinet",
+      "product": "fortigate"
+    },
+    "palo_alto": {
+      "pattern": "^%{DATA:date} %{TIME:time} %{DATA:device_name} %{WORD:type}: %{DATA:subtype} %{WORD:action} %{WORD:policyid} %{WORD:srcintf} %{WORD:dstintf} %{IP:src_ip} %{IP:dst_ip} %{NUMBER:src_port} %{NUMBER:dst_port} %{WORD:protocol}(?:%{GREEDYDATA:all})?",
+      "description": "Palo Alto PAN-OS firewall log",
+      "priority": 1,
+      "vendor": "palo_alto",
+      "product": "pan-os"
+    },
+    "windows_security": {
+      "pattern": "^%{DATA:timestamp} %{WORD:computer_name} %{WORD:event_id} %{WORD:event_type} %{DATA:user_name} %{IP:src_ip} %{IP:dst_ip} %{NUMBER:port}(?:%{GREEDYDATA:all})?",
+      "description": "Windows Security Event Log",
+      "priority": 1,
+      "vendor": "microsoft",
+      "product": "windows"
+    },
+    "syslog_standard": {
+      "pattern": "^<%{NUMBER:priority}>%{NUMBER:version} %{TIMESTAMP_ISO8601:timestamp} %{IPORHOST:hostname} %{DATA:program} %{NUMBER:pid} %{WORD:msgid} %{DATA:structured_data} %{GREEDYDATA:message}",
+      "description": "Standard syslog format (RFC 5424)",
+      "priority": 1,
+      "vendor": "generic",
+      "product": "syslog"
+    },
+    "syslog_legacy": {
+      "pattern": "^<%{NUMBER:priority}>%{SYSLOGTIMESTAMP:timestamp} %{IPORHOST:hostname} %{DATA:program}(?:\\[%{NUMBER:pid}\\])?: %{GREEDYDATA:message}",
+      "description": "Legacy syslog format (RFC 3164)",
+      "priority": 2,
+      "vendor": "generic",
+      "product": "syslog"
+    },
+    "json_log": {
+      "pattern": "^\\{%{GREEDYDATA:json_content}\\}(?:%{GREEDYDATA:all})?",
+      "description": "JSON formatted log",
+      "priority": 1,
+      "vendor": "generic",
+      "product": "json"
+    },
+    "cef_format": {
+      "pattern": "^CEF:%{NUMBER:cef_version}\\|%{DATA:device_vendor}\\|%{DATA:device_product}\\|%{DATA:device_version}\\|%{DATA:device_event_class_id}\\|%{DATA:name}\\|%{NUMBER:severity}\\|%{GREEDYDATA:extension}(?:%{GREEDYDATA:all})?",
+      "description": "Common Event Format (CEF)",
+      "priority": 1,
+      "vendor": "generic",
+      "product": "cef"
+    },
+    "aws_cloudtrail": {
+      "pattern": "^%{DATA:timestamp} %{DATA:account_id} %{DATA:region} %{IP:source_ip} %{DATA:user_identity} %{DATA:event_name} %{DATA:aws_service} %{DATA:request_id}(?:%{GREEDYDATA:all})?",
+      "description": "AWS CloudTrail log",
+      "priority": 10,
+      "vendor": "aws",
+      "product": "cloudtrail"
+    },
+    "aws_elb": {
+      "pattern": "^%{DATA:timestamp} %{DATA:elb_name} %{IP:client_ip}:%{NUMBER:client_port} %{IP:target_ip}:%{NUMBER:target_port} %{NUMBER:request_processing_time} %{NUMBER:target_processing_time} %{NUMBER:response_processing_time} %{NUMBER:elb_status_code} %{NUMBER:target_status_code} %{NUMBER:received_bytes} %{NUMBER:sent_bytes} \"%{DATA:request}\" \"%{DATA:user_agent}\" %{DATA:ssl_cipher} %{DATA:ssl_protocol}(?:%{GREEDYDATA:all})?",
+      "description": "AWS Elastic Load Balancer access log",
+      "priority": 1,
+      "vendor": "aws",
+      "product": "elb"
+    },
+    "mysql_slow_query": {
+      "pattern": "^# Time: %{TIMESTAMP_ISO8601:timestamp}\\s+# User@Host: %{DATA:user}\\[%{DATA:user_name}\\].*\\s+# Query_time: %{NUMBER:query_time}\\s+Lock_time: %{NUMBER:lock_time}\\s+Rows_sent: %{NUMBER:rows_sent}\\s+Rows_examined: %{NUMBER:rows_examined}(?:%{GREEDYDATA:all})?",
+      "description": "MySQL slow query log",
+      "priority": 1,
+      "vendor": "mysql",
+      "product": "mysql"
+    },
+    "postgresql_log": {
+      "pattern": "^%{DATA:timestamp} \\[%{NUMBER:pid}\\] %{WORD:level}: %{DATA:message}(?:%{GREEDYDATA:all})?",
+      "description": "PostgreSQL log",
+      "priority": 1,
+      "vendor": "postgresql",
+      "product": "postgresql"
+    },
+    "docker_log": {
+      "pattern": "^%{DATA:timestamp} %{WORD:level} %{DATA:container_id} %{DATA:image} %{GREEDYDATA:message}",
+      "description": "Docker container log",
+      "priority": 1,
+      "vendor": "docker",
+      "product": "docker"
+    },
+    "kubernetes_log": {
+      "pattern": "^%{DATA:timestamp} %{WORD:level} %{DATA:source} %{DATA:namespace} %{DATA:pod_name} %{DATA:container_name} %{GREEDYDATA:message}",
+      "description": "Kubernetes pod log",
+      "priority": 1,
+      "vendor": "kubernetes",
+      "product": "kubernetes"
+    }
+  },
+  "common_patterns": {
+    "IP": "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)",
+    "IPORHOST": "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|[a-zA-Z0-9.-]+",
+    "WORD": "\\b\\w+\\b",
+    "DATA": "[^\\s]+",
+    "NUMBER": "\\d+",
+    "HTTPDATE": "\\d{2}/[A-Za-z]{3}/\\d{4}:\\d{2}:\\d{2}:\\d{2} [+-]\\d{4}",
+    "TIMESTAMP_ISO8601": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z?",
+    "SYSLOGTIMESTAMP": "[A-Za-z]{3}\\s+\\d{1,2}\\s+\\d{2}:\\d{2}:\\d{2}",
+    "TIME": "\\d{2}:\\d{2}:\\d{2}",
+    "GREEDYDATA": ".*"
+  }
+}

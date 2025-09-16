@@ -1,0 +1,805 @@
+[
+        {
+          "function_name": "append",
+          "description": "Appends each item in the `items` array to the end of the `value` array.",
+          "function_spec": "append(value: <array> ,items: <array> )"
+        },
+        {
+          "function_name": "chunks",
+          "description": "Chunks `value` into slices of length `chunk_size` bytes.",
+          "function_spec": "chunks(value: <array | string> ,chunk_size: <integer> )"
+        },
+        {
+          "function_name": "push",
+          "description": "Adds the `item` to the end of the `value` array.",
+          "function_spec": "push(value: <array> ,item: <any> )"
+        },
+        {
+          "function_name": "zip",
+          "description": "Iterate over several arrays in parallel, producing a new array containing arrays of items from each source. The resulting array will be as long as the shortest input array, with all the remaining elements dropped. If a single parameter is given, it must contain an array of all the input arrays.",
+          "function_spec": "zip(array_0: <array> , [array_1: <array> ] )"
+        }
+        ,
+        {
+          "function_name": "decode_base16",
+          "description": "Decodes the value (a Base16 string) into its original string.",
+          "function_spec": "decode_base16(value: <string> )"
+        },
+        {
+          "function_name": "decode_base64",
+          "description": "Decodes the value (a Base64 string) into its original string.",
+          "function_spec": "decode_base64(value: <string> , [charset: <string> ] )"
+        },
+        {
+          "function_name": "decode_charset",
+          "description": "Decodes the value (a non-UTF8 string) to a UTF8 string using the specified character set.",
+          "function_spec": "decode_charset(value: <string> ,from_charset: <string> )"
+        },
+        {
+          "function_name": "decode_gzip",
+          "description": "Decodes the value (a Gzip string) into its original string.",
+          "function_spec": "decode_gzip(value: <string> )"
+        },
+        {
+          "function_name": "decode_lz4",
+          "description": "Decodes the value (an lz4 string) into its original string.",
+          "function_spec": "decode_lz4(value: <string> )"
+        },
+        {
+          "function_name": "decode_mime_q",
+          "description": "Replaces q-encoded or base64-encoded encoded-word substrings in the value with their original string.",
+          "function_spec": "decode_mime_q(value: <string> )"
+        },
+        {
+          "function_name": "decode_percent",
+          "description": "Decodes a percent-encoded value like a URL.",
+          "function_spec": "decode_percent(value: <string> )"
+        },
+        {
+          "function_name": "decode_punycode",
+          "description": "Decodes a punycode encoded value, such as an internationalized domain name (IDN).",
+          "function_spec": "decode_punycode(value: <string> , [validate: <boolean> ] )"
+        },
+        {
+          "function_name": "decode_snappy",
+          "description": "Decodes the value (a Snappy string) into its original string.",
+          "function_spec": "decode_snappy(value: <string> )"
+        },
+        {
+          "function_name": "decode_zlib",
+          "description": "Decodes the value (a Zlib string) into its original string.",
+          "function_spec": "decode_zlib(value: <string> )"
+        },
+        {
+          "function_name": "decode_zstd",
+          "description": "Decodes the value (a Zstandard string) into its original string.",
+          "function_spec": "decode_zstd(value: <string> )"
+        },
+        {
+          "function_name": "encode_base16",
+          "description": "Encodes the value to Base16.",
+          "function_spec": "encode_base16(value: <string> )"
+        },
+        {
+          "function_name": "encode_base64",
+          "description": "Encodes the value to Base64.",
+          "function_spec": "encode_base64(value: <string> , [padding: <boolean> ,charset: <string> ] )"
+        },
+        {
+          "function_name": "encode_charset",
+          "description": "Encodes the value (a UTF8 string) to a non-UTF8 string using the specified character set.",
+          "function_spec": "encode_charset(value: <string> ,to_charset: <string> )"
+        },
+        {
+          "function_name": "encode_gzip",
+          "description": "Encodes the value to Gzip.",
+          "function_spec": "encode_gzip(value: <string> , [compression_level: <integer> ] )"
+        },
+        {
+          "function_name": "encode_json",
+          "description": "Encodes the value to JSON.",
+          "function_spec": "encode_json(value: <any> , [pretty: <boolean> ] )"
+        },
+        {
+          "function_name": "encode_key_value",
+          "description": "Encodes the value into key-value format with customizable delimiters. Default delimiters match the logfmt format.",
+          "function_spec": "encode_key_value(value: <object> , [fields_ordering: <array> ,key_value_delimiter: <string> ,field_delimiter: <string> ,flatten_boolean: <boolean> ] )"
+        },
+        {
+          "function_name": "encode_logfmt",
+          "description": "Encodes the value to logfmt.",
+          "function_spec": "encode_logfmt(value: <object> , [fields_ordering: <array> ] )"
+        },
+        {
+          "function_name": "encode_lz4",
+          "description": "Encodes the value to Lz4.",
+          "function_spec": "encode_lz4(value: <string> )"
+        },
+        {
+          "function_name": "encode_percent",
+          "description": "Encodes a value with percent encoding to safely be used in URLs.",
+          "function_spec": "encode_percent(value: <string> , [ascii_set: <string> ] )"
+        },
+        {
+          "function_name": "encode_proto",
+          "description": "Encodes the value into a protocol buffer payload.",
+          "function_spec": "encode_proto(value: <object> ,desc_file: <string> ,message_type: <string> )"
+        },
+        {
+          "function_name": "encode_punycode",
+          "description": "Encodes a value to punycode. Useful for internationalized domain names (IDN).",
+          "function_spec": "encode_punycode(value: <string> , [validate: <boolean> ] )"
+        },
+        {
+          "function_name": "encode_snappy",
+          "description": "Encodes the value to Snappy.",
+          "function_spec": "encode_snappy(value: <string> )"
+        },
+        {
+          "function_name": "encode_zlib",
+          "description": "Encodes the value to Zlib.",
+          "function_spec": "encode_zlib(value: <string> , [compression_level: <integer> ] )"
+        },
+        {
+          "function_name": "encode_zstd",
+          "description": "Encodes the value to Zstandard.",
+          "function_spec": "encode_zstd(value: <string> , [compression_level: <integer> ] )"
+        }
+        ,
+        {
+          "function_name": "to_bool",
+          "description": "Coerces the value into a boolean.",
+          "function_spec": "to_bool(value: <boolean | integer | float | null | string> )"
+        },
+        {
+          "function_name": "to_float",
+          "description": "Coerces the value into a float.",
+          "function_spec": "to_float(value: <integer | float | boolean | string | timestamp> )"
+        },
+        {
+          "function_name": "to_int",
+          "description": "Coerces the value into an integer.",
+          "function_spec": "to_int(value: <integer | float | boolean | string | timestamp | null> )"
+        },
+        {
+          "function_name": "to_regex",
+          "description": "Coerces the value into a regex.",
+          "function_spec": "to_regex(value: <string> )"
+        },
+        {
+          "function_name": "to_string",
+          "description": "Coerces the value into a string.",
+          "function_spec": "to_string(value: <integer | float | boolean | string | timestamp | null> )"
+        },
+        {
+          "function_name": "from_unix_timestamp",
+          "description": "Converts an integer Unix timestamp into a VRL timestamp. Supports seconds, milliseconds, and nanoseconds.",
+          "function_spec": "from_unix_timestamp(value: <integer> , [unit: <string> ] )"
+        },
+        {
+          "function_name": "to_syslog_facility",
+          "description": "Converts a Syslog facility code into its corresponding Syslog keyword.",
+          "function_spec": "to_syslog_facility(value: <integer> )"
+        },
+        {
+          "function_name": "to_syslog_facility_code",
+          "description": "Converts a Syslog facility keyword into a Syslog facility code.",
+          "function_spec": "to_syslog_facility_code(value: <string> )"
+        },
+        {
+          "function_name": "to_syslog_level",
+          "description": "Converts a Syslog severity level code into its corresponding keyword.",
+          "function_spec": "to_syslog_level(value: <integer> )"
+        },
+        {
+          "function_name": "to_syslog_severity",
+          "description": "Converts a Syslog severity keyword into a Syslog severity code.",
+          "function_spec": "to_syslog_severity(value: <string> )"
+        },
+        {
+          "function_name": "to_unix_timestamp",
+          "description": "Converts a VRL timestamp into a Unix timestamp in seconds, milliseconds, or nanoseconds.",
+          "function_spec": "to_unix_timestamp(value: <timestamp> , [unit: <string> ] )"
+        },
+        {
+          "function_name": "assert",
+          "description": "Asserts that the given boolean condition is true. If false, aborts execution and raises an error with an optional message.",
+          "function_spec": "assert(condition: <boolean> , [message: <string> ] )"
+        },
+        {
+          "function_name": "assert_eq",
+          "description": "Asserts that two values are equal. If they are not, aborts execution and optionally shows a custom message.",
+          "function_spec": "assert_eq(left: <any> ,right: <any> , [message: <string> ] )"
+        },
+        {
+          "function_name": "log",
+          "description": "Logs the given value to stdout with an optional logging level and rate limit.",
+          "function_spec": "log(value: <any> , [level: <string> ,rate_limit_secs: <integer> ] )"
+        },
+        {
+          "function_name": "find_enrichment_table_records",
+          "description": "Searches an enrichment table for rows matching the given condition object. Can optionally select specific fields and control case sensitivity.",
+          "function_spec": "find_enrichment_table_records(table: <string> ,condition: <object> , [select: <array> ,case_sensitive: <boolean> ] )"
+        },
+        {
+          "function_name": "get_enrichment_table_record",
+          "description": "Searches an enrichment table for a single row matching the given condition. Returns an error if no rows or multiple rows match.",
+          "function_spec": "get_enrichment_table_record(table: <string> ,condition: <object> , [select: <array> ,case_sensitive: <boolean> ] )"
+        },
+        {
+          "function_name": "compact",
+          "description": "Removes empty values (null, empty strings, empty objects/arrays) from an array or object. Can be recursive.",
+          "function_spec": "compact(value: <array | object> , [recursive: <boolean> ,null: <boolean> ,string: <boolean> ,object: <boolean> ,array: <boolean> ,nullish: <boolean> ] )"
+        },
+        {
+          "function_name": "filter",
+          "description": "Filters elements from an array or object based on a closure returning a boolean.",
+          "function_spec": "filter(value: <array | object> )"
+        },
+        {
+          "function_name": "flatten",
+          "description": "Flattens nested arrays or objects into a single-level structure using an optional key separator.",
+          "function_spec": "flatten(value: <array | object> , [separator: <string> ] )"
+        },
+        {
+          "function_name": "for_each",
+          "description": "Iterates over each element in an array or object and executes a closure for side effects.",
+          "function_spec": "for_each(value: <array | object> )"
+        },
+        {
+          "function_name": "includes",
+          "description": "Determines whether an array includes a given element.",
+          "function_spec": "includes(value: <array> ,item: <any> )"
+        },
+        {
+          "function_name": "keys",
+          "description": "Returns an array of the keys from the given object.",
+          "function_spec": "keys(value: <object> )"
+        },
+        {
+          "function_name": "length",
+          "description": "Returns the length of an array, object (number of keys), or string (number of bytes).",
+          "function_spec": "length(value: <array | object | string> )"
+        },
+        {
+          "function_name": "map_keys",
+          "description": "Applies a closure to each key in an object, returning a new object. Can recurse into nested objects.",
+          "function_spec": "map_keys(value: <object> , [recursive: <boolean> ] )"
+        },
+        {
+          "function_name": "map_values",
+          "description": "Applies a closure to each value in an array or object, returning a new array or object. Can recurse.",
+          "function_spec": "map_values(value: <array | object> , [recursive: <boolean> ] )"
+        },
+        {
+          "function_name": "match_array",
+          "description": "Checks if elements in an array match a regex pattern. Can require all elements to match.",
+          "function_spec": "match_array(value: <array> ,pattern: <regex> , [all: <boolean> ] )"
+        },
+        {
+          "function_name": "strlen",
+          "description": "Returns the number of UTF-8 characters (not bytes) in a string.",
+          "function_spec": "strlen(value: <string> )"
+        },
+        {
+          "function_name": "unflatten",
+          "description": "Reconstructs nested objects from flattened keys with a separator.",
+          "function_spec": "unflatten(value: <object> , [separator: <string> ,recursive: <boolean> ] )"
+        },
+        {
+          "function_name": "unique",
+          "description": "Removes duplicate elements from an array, keeping first occurrences.",
+          "function_spec": "unique(value: <array> )"
+        },
+        {
+          "function_name": "values",
+          "description": "Extracts and returns an array of values from an object.",
+          "function_spec": "values(value: <object> )"
+        },
+        {
+          "function_name": "get_secret",
+          "description": "Returns the value of the given secret from an event.",
+          "function_spec": "get_secret(key: <string> )"
+        },
+        {
+          "function_name": "remove_secret",
+          "description": "Removes a secret from an event.",
+          "function_spec": "remove_secret(key: <string> )"
+        },
+        {
+          "function_name": "set_secret",
+          "description": "Sets the given secret in the event.",
+          "function_spec": "set_secret(key: <string> ,secret: <string> )"
+        },
+        {
+          "function_name": "set_semantic_meaning",
+          "description": "Sets a semantic meaning for an event field at startup (non-conditional).",
+          "function_spec": "set_semantic_meaning(target: <path> ,meaning: <string> )"
+        },
+        {
+          "function_name": "del",
+          "description": "Removes the field specified by the static path from the target. Can optionally compact empty parents.",
+          "function_spec": "del(path: <path> , [compact: <boolean> ] )"
+        },
+        {
+          "function_name": "exists",
+          "description": "Checks whether the path exists in the target, differentiating between missing and null values.",
+          "function_spec": "exists(path: <path> )"
+        },
+        {
+          "function_name": "get",
+          "description": "Gets the value at the specified path in the target, returning null if it does not exist.",
+          "function_spec": "get(path: <path> )"
+        },
+        {
+          "function_name": "set",
+          "description": "Sets the value at the specified path in the target, creating intermediate objects if necessary.",
+          "function_spec": "set(path: <path> ,value: <any> )"
+        },
+        {
+          "function_name": "get",
+          "description": "Dynamically gets the value of a given path in an object or array.",
+          "function_spec": "get(value: <object | array> ,path: <array> )"
+        },
+        {
+          "function_name": "remove",
+          "description": "Dynamically removes the value for a given path. Can optionally compact empty parents.",
+          "function_spec": "remove(value: <object | array> ,path: <array> , [compact: <boolean> ] )"
+        },
+        {
+          "function_name": "set",
+          "description": "Dynamically inserts data into the specified path of a given object or array.",
+          "function_spec": "set(value: <object | array> ,path: <array> ,data: <any> )"
+        },
+        {
+          "function_name": "decrypt",
+          "description": "Decrypts a string with a symmetric encryption algorithm. Supports various AES, ChaCha20, and XSalsa20 algorithms.",
+          "function_spec": "decrypt(ciphertext: <string> ,algorithm: <string> ,key: <string> ,iv: <string> )"
+        },
+        {
+          "function_name": "encrypt",
+          "description": "Encrypts a string with a symmetric encryption algorithm. Supports various AES, ChaCha20, and XSalsa20 algorithms.",
+          "function_spec": "encrypt(plaintext: <string> ,algorithm: <string> ,key: <string> ,iv: <string> )"
+        },
+        {
+          "function_name": "hmac",
+          "description": "Calculates a keyed-hash message authentication code (HMAC) for the given string using the specified algorithm (default SHA-256).",
+          "function_spec": "hmac(value: <string> ,key: <string> , [algorithm: <string> ] )"
+        },
+        {
+          "function_name": "md5",
+          "description": "Calculates the MD5 hash of the given string and returns it as a hex-encoded string.",
+          "function_spec": "md5(value: <string> )"
+        },
+        {
+          "function_name": "seahash",
+          "description": "Calculates a SeaHash 64-bit hash of a string and returns it as a signed 64-bit integer.",
+          "function_spec": "seahash(value: <string> )"
+        },
+        {
+          "function_name": "sha1",
+          "description": "Calculates the SHA-1 hash of a string and returns it as a hex-encoded string.",
+          "function_spec": "sha1(value: <string> )"
+        },
+        {
+          "function_name": "sha2",
+          "description": "Calculates the SHA-2 hash of the given string with an optional variant (e.g., SHA-512/256).",
+          "function_spec": "sha2(value: <string> , [variant: <string> ] )"
+        },
+        {
+          "function_name": "sha3",
+          "description": "Calculates the SHA-3 hash of the given string with an optional variant (e.g., SHA3-512).",
+          "function_spec": "sha3(value: <string> , [variant: <string> ] )"
+        },
+        {
+          "function_name": "get_env_var",
+          "description": "Returns the value of the environment variable specified by name.",
+          "function_spec": "get_env_var(name: <string> )"
+        },
+        {
+          "function_name": "get_hostname",
+          "description": "Returns the local system’s hostname.",
+          "function_spec": "get_hostname()"
+        },
+        {
+          "function_name": "get_timezone_name",
+          "description": "Returns the name of the timezone from configuration or local OS. If unavailable, returns the fixed offset for the current time.",
+          "function_spec": "get_timezone_name()"
+        },
+        {
+          "function_name": "format_timestamp",
+          "description": "Formats a timestamp value into a string according to a provided format and optional timezone.",
+          "function_spec": "format_timestamp(value: <timestamp> ,format: <string> , [timezone: <string> ] )"
+        },
+        {
+          "function_name": "now",
+          "description": "Returns the current timestamp in UTC with nanosecond precision.",
+          "function_spec": "now()"
+        },
+        {
+          "function_name": "array",
+          "description": "Returns the value if it is an array, otherwise returns an error.",
+          "function_spec": "array(value: <any> )"
+        },
+        {
+          "function_name": "bool",
+          "description": "Returns the value if it is a boolean, otherwise returns an error.",
+          "function_spec": "bool(value: <any> )"
+        },
+        {
+          "function_name": "float",
+          "description": "Returns the value if it is a float, otherwise returns an error.",
+          "function_spec": "float(value: <any> )"
+        },
+        {
+          "function_name": "int",
+          "description": "Returns the value if it is an integer, otherwise returns an error.",
+          "function_spec": "int(value: <any> )"
+        },
+        {
+          "function_name": "is_array",
+          "description": "Checks if the value is an array.",
+          "function_spec": "is_array(value: <any> )"
+        },
+        {
+          "function_name": "is_boolean",
+          "description": "Checks if the value is a boolean.",
+          "function_spec": "is_boolean(value: <any> )"
+        },
+        {
+          "function_name": "is_empty",
+          "description": "Checks if an object, array, or string has a length of 0.",
+          "function_spec": "is_empty(value: <object | array | string> )"
+        },
+        {
+          "function_name": "is_float",
+          "description": "Checks if the value is a float.",
+          "function_spec": "is_float(value: <any> )"
+        },
+        {
+          "function_name": "is_integer",
+          "description": "Checks if the value is an integer.",
+          "function_spec": "is_integer(value: <any> )"
+        },
+        {
+          "function_name": "is_json",
+          "description": "Checks whether a string is a valid JSON document.",
+          "function_spec": "is_json(value: <string> , [variant: <string> ] )"
+        },
+        {
+          "function_name": "is_null",
+          "description": "Checks if the value is null.",
+          "function_spec": "is_null(value: <any> )"
+        },
+        {
+          "function_name": "is_nullish",
+          "description": "Checks if the value is 'nullish' (null, empty string, whitespace string, or '-').",
+          "function_spec": "is_nullish(value: <any> )"
+        },
+        {
+          "function_name": "is_object",
+          "description": "Checks if the value is an object.",
+          "function_spec": "is_object(value: <any> )"
+        },
+        {
+          "function_name": "is_regex",
+          "description": "Checks if the value is a regex.",
+          "function_spec": "is_regex(value: <any> )"
+        },
+        {
+          "function_name": "is_string",
+          "description": "Checks if the value is a string.",
+          "function_spec": "is_string(value: <any> )"
+        },
+        {
+          "function_name": "is_timestamp",
+          "description": "Checks if the value is a timestamp.",
+          "function_spec": "is_timestamp(value: <any> )"
+        },
+        {
+          "function_name": "object",
+          "description": "Returns the value if it is an object, otherwise returns an error.",
+          "function_spec": "object(value: <any> )"
+        },
+        {
+          "function_name": "string",
+          "description": "Returns the value if it is a string, otherwise returns an error.",
+          "function_spec": "string(value: <any> )"
+        },
+        {
+          "function_name": "tag_types_externally",
+          "description": "Adds type information externally to each scalar value in the provided value.",
+          "function_spec": "tag_types_externally(value: <any> )"
+        },
+        {
+          "function_name": "timestamp",
+          "description": "Returns the value if it is a timestamp, otherwise returns an error.",
+          "function_spec": "timestamp(value: <any> )"
+        },
+        {
+          "function_name": "crc",
+          "description": "Calculates a CRC checksum of the value using an optional CRC algorithm.",
+          "function_spec": "crc(value: <string> , [algorithm: <string> ] )"
+        },
+        {
+          "function_name": "ip_aton",
+          "description": "Converts an IPv4 address string into its 32-bit integer representation.",
+          "function_spec": "ip_aton(address: <string>)"
+        },
+        {
+          "function_name": "ip_cidr_contains",
+          "description": "Returns true if the given IP/CIDR range contains the target IP address.",
+          "function_spec": "ip_cidr_contains(cidr: <string>, address: <string>)"
+        },
+        {
+          "function_name": "ip_ntoa",
+          "description": "Converts a 32-bit integer IPv4 address to its string representation.",
+          "function_spec": "ip_ntoa(value: <integer>)"
+        },
+        {
+          "function_name": "ip_ntop",
+          "description": "Converts a packed binary IP address (IPv4 or IPv6) to its string representation.",
+          "function_spec": "ip_ntop(value: <bytes>)"
+        },
+        {
+          "function_name": "ip_pton",
+          "description": "Converts an IP address string into its packed binary form (IPv4 or IPv6).",
+          "function_spec": "ip_pton(address: <string>)"
+        },
+        {
+          "function_name": "ip_subnet",
+          "description": "Returns the network address for the given IP and CIDR prefix length.",
+          "function_spec": "ip_subnet(ip: <string>, prefix: <integer>)"
+        },
+        {
+          "function_name": "ip_to_ipv6",
+          "description": "Converts an IPv4 address to an IPv4-mapped IPv6 address.",
+          "function_spec": "ip_to_ipv6(address: <string>)"
+        },
+        {
+          "function_name": "ipv6_to_ipv4",
+          "description": "Converts an IPv4-mapped IPv6 address to an IPv4 address string.",
+          "function_spec": "ipv6_to_ipv4(address: <string>)"
+        },
+        {
+          "function_name": "is_ipv4",
+          "description": "Returns true if the value is a valid IPv4 address string.",
+          "function_spec": "is_ipv4(value: <string>)"
+        },
+        {
+          "function_name": "is_ipv6",
+          "description": "Returns true if the value is a valid IPv6 address string.",
+          "function_spec": "is_ipv6(value: <string>)"
+        },
+        {
+          "function_name": "abs",
+          "description": "Returns the absolute value of a number.",
+          "function_spec": "abs(value: <integer | float>)"
+        },
+        {
+          "function_name": "ceil",
+          "description": "Returns the smallest integer greater than or equal to the value.",
+          "function_spec": "ceil(value: <integer | float>)"
+        },
+        {
+          "function_name": "floor",
+          "description": "Returns the largest integer less than or equal to the value.",
+          "function_spec": "floor(value: <integer | float>)"
+        },
+        {
+          "function_name": "format_int",
+          "description": "Formats an integer as a string in the given base (2-36).",
+          "function_spec": "format_int(value: <integer>, base: <integer>)"
+        },
+        {
+          "function_name": "format_number",
+          "description": "Formats a number using locale-aware grouping and decimal separators.",
+          "function_spec": "format_number(value: <integer | float>, [format: <string>])"
+        },
+        {
+          "function_name": "mod",
+          "description": "Returns the remainder of integer division.",
+          "function_spec": "mod(value: <integer>, divisor: <integer>)"
+        },
+        {
+          "function_name": "round",
+          "description": "Rounds a number to the nearest integer or to the given number of decimal places.",
+          "function_spec": "round(value: <integer | float>, [places: <integer>])"
+        },
+        {
+          "function_name": "match_datadog_query",
+          "description": "Filters an object according to a Datadog log query string.",
+          "function_spec": "match_datadog_query(obj: <object>, query: <string>)"
+        },
+        {
+          "function_name": "merge",
+          "description": "Merges multiple objects into one, with latter keys overwriting former ones.",
+          "function_spec": "merge(objects: <array>)"
+        },
+        {
+          "function_name": "object_from_array",
+          "description": "Creates an object from an array of key-value pairs.",
+          "function_spec": "object_from_array(pairs: <array>)"
+        },
+        {
+          "function_name": "unnest",
+          "description": "Expands a nested object into its top-level fields.",
+          "function_spec": "unnest(object: <object>)"
+        },
+        {
+          "function_name": "parse_apache_log",
+          "description": "Parses an Apache HTTPD access log line using the given format string.",
+          "function_spec": "parse_apache_log(value: <string>, format: <string>)"
+        },
+        {
+          "function_name": "parse_aws_alb_log",
+          "description": "Parses an AWS Application Load Balancer access log line.",
+          "function_spec": "parse_aws_alb_log(value: <string>)"
+        },
+        {
+          "function_name": "parse_aws_cloudwatch_log_subscription_message",
+          "description": "Parses a decompressed AWS CloudWatch Logs subscription filter message.",
+          "function_spec": "parse_aws_cloudwatch_log_subscription_message(value: <string>)"
+        },
+        {
+          "function_name": "parse_aws_vpc_flow_log",
+          "description": "Parses an AWS VPC Flow Log entry.",
+          "function_spec": "parse_aws_vpc_flow_log(value: <string>)"
+        },
+        {
+          "function_name": "parse_bytes",
+          "description": "Parses a byte size string (e.g., '10kb') into an integer number of bytes.",
+          "function_spec": "parse_bytes(value: <string>)"
+        },
+        {
+          "function_name": "parse_cbor",
+          "description": "Parses a CBOR-encoded binary string into a VRL value.",
+          "function_spec": "parse_cbor(value: <string>)"
+        },
+        {
+          "function_name": "parse_cef",
+          "description": "Parses a log message in the Common Event Format (CEF).",
+          "function_spec": "parse_cef(value: <string>)"
+        },
+        {
+          "function_name": "parse_common_log",
+          "description": "Parses a Common Log Format (CLF) HTTP access log line.",
+          "function_spec": "parse_common_log(value: <string>)"
+        },
+        {
+          "function_name": "parse_csv",
+          "description": "Parses a CSV string into an array or array of objects if headers are supplied.",
+          "function_spec": "parse_csv(value: <string>, [delimiter: <string>, header: <boolean>])"
+        },
+        {
+          "function_name": "parse_dnstap",
+          "description": "Parses a DNSTAP message into an object.",
+          "function_spec": "parse_dnstap(value: <string>)"
+        },
+        {
+          "function_name": "parse_dns_message",
+          "description": "Parses a DNS message from a string.",
+          "function_spec": "parse_dns_message(value: <string>)"
+        },
+        {
+          "function_name": "parse_duration",
+          "description": "Parses a duration string into nanoseconds.",
+          "function_spec": "parse_duration(value: <string>)"
+        },
+        {
+          "function_name": "parse_etld",
+          "description": "Parses a domain into its Effective Top-Level Domain (eTLD) parts.",
+          "function_spec": "parse_etld(value: <string>)"
+        },
+        {
+          "function_name": "parse_glog",
+          "description": "Parses a Google Glog-formatted log line.",
+          "function_spec": "parse_glog(value: <string>)"
+        },
+        {
+          "function_name": "parse_grok",
+          "description": "Parses a string using a single Grok pattern.",
+          "function_spec": "parse_grok(value: <string>, pattern: <string>)"
+        },
+        {
+          "function_name": "parse_groks",
+          "description": "Parses a string using multiple Grok patterns, stopping on first match.",
+          "function_spec": "parse_groks(value: <string>, patterns: <array>)"
+        },
+      {
+        "function_name": "parse_influxdb",
+        "description": "Parses an InfluxDB line protocol string.",
+        "function_spec": "parse_influxdb(value: <string>)"
+      },
+      {
+        "function_name": "parse_int",
+        "description": "Parses a string as an integer.",
+        "function_spec": "parse_int(value: <string>, [base: <integer>])"
+      },
+      {
+        "function_name": "parse_json",
+        "description": "Parses a JSON string into a VRL value.",
+        "function_spec": "parse_json(value: <string>, [allow_trailing: <boolean>])"
+      },
+      {
+        "function_name": "parse_key_value",
+        "description": "Parses a key-value formatted string into an object.",
+        "function_spec": "parse_key_value(value: <string>, [field_delimiter: <string>, key_value_delimiter: <string>])"
+      },
+      {
+        "function_name": "parse_klog",
+        "description": "Parses a Kubernetes audit log message.",
+        "function_spec": "parse_klog(value: <string>)"
+      },
+      {
+        "function_name": "parse_linux_authorization",
+        "description": "Parses a Linux auth log message.",
+        "function_spec": "parse_linux_authorization(value: <string>)"
+      },
+      {
+        "function_name": "parse_logfmt",
+        "description": "Parses a logfmt-formatted string into an object.",
+        "function_spec": "parse_logfmt(value: <string>)"
+      },
+      {
+        "function_name": "parse_nginx_log",
+        "description": "Parses an NGINX access log line with the given format.",
+        "function_spec": "parse_nginx_log(value: <string>, format: <string>)"
+      },
+      {
+        "function_name": "parse_proto",
+        "description": "Parses a protocol buffer (protobuf) message from a string.",
+        "function_spec": "parse_proto(value: <string>, desc_file: <string>, message_type: <string>)"
+      },
+      {
+        "function_name": "parse_query_string",
+        "description": "Parses a URL query string into an object of keys and values.",
+        "function_spec": "parse_query_string(value: <string>)"
+      },
+      {
+        "function_name": "parse_regex",
+        "description": "Parses a string using a regex pattern with named capture groups.",
+        "function_spec": "parse_regex(value: <string>, pattern: <regex>)"
+      },
+      {
+        "function_name": "parse_regex_all",
+        "description": "Parses all matches of a regex pattern with named capture groups.",
+        "function_spec": "parse_regex_all(value: <string>, pattern: <regex>)"
+      },
+      {
+        "function_name": "parse_ruby_hash",
+        "description": "Parses a Ruby hash string into an object.",
+        "function_spec": "parse_ruby_hash(value: <string>)"
+      },
+      {
+        "function_name": "parse_syslog",
+        "description": "Parses a syslog message according to RFC 3164 or RFC 5424.",
+        "function_spec": "parse_syslog(value: <string>)"
+      },
+      {
+        "function_name": "parse_timestamp",
+        "description": "Parses a string into a VRL timestamp value according to a format.",
+        "function_spec": "parse_timestamp(value: <string>, format: <string>)"
+      },
+      {
+        "function_name": "parse_tokens",
+        "description": "Parses a space/comma/char-delimited string into an array of tokens.",
+        "function_spec": "parse_tokens(value: <string>, [delimiter: <string>])"
+      },
+      {
+        "function_name": "parse_url",
+        "description": "Parses a URL string into its components.",
+        "function_spec": "parse_url(value: <string>)"
+      },
+      {
+        "function_name": "parse_user_agent",
+        "description": "Parses a user-agent string into its structured components.",
+        "function_spec": "parse_user_agent(value: <string>)"
+      },
+      {
+        "function_name": "parse_xml",
+        "description": "Parses an XML string into a VRL value.",
+        "function_spec": "parse_xml(value: <string>)"
+      }
+    ]
+  

@@ -1,0 +1,382 @@
+####apache-access###
+"%{DATA:address}(%{IPORHOST:destination_domain}:?%{POSINT:destination_port}? )?(%{IPORHOST:source_address}:?%{POSINT:source_port}? )%{DATA:apache_access_identity} %{DATA:user_name} \\[%{HTTPDATE:apache_access_time}\\] '(%{DATA:apache_access_tls_handshake_error})?((%{WORD:http_request_method}?) %{DATA:_tmp_url_orig}? HTTP/%{NUMBER:http_version})?(%{WORD:http_request_method1}? ?%{DATA:apache_access_http_request_headers}?(-)? %{DATA:_tmp_url_orig1} HTTP/%{NUMBER:http_version1})?(-)?' %{NUMBER:http_response_status_code} (?:%{NUMBER:http_response_body_bytes}|-)( %{NUMBER:apache_access_response_time})?( '%{DATA:http_request_referrer}')?( '%{DATA:user_agent_original}')?( X-Forwarded-For='(?<apache_remote_addresses>(%{IP})('?,?\\s*(%{IP}))*)')?(?:%{DATA}-\\s(%{IP:host_ip}|%{DATA:url_domain})\\s%{GREEDYDATA})?.*$"
+"^\\[%{HTTPDATE:apache_access_time}\\] %{IPORHOST:source_address} %{DATA:apache_access_ssl_protocol} %{DATA:apache_access_ssl_cipher} '%{WORD:http_request_method} %{DATA:_tmp_url_orig} HTTP/%{NUMBER:http_version}' (-|%{NUMBER:http_response_body_bytes}).*$"
+###apache-error###
+"\\[%{DATA:apache_error_timestamp}\\] \\[%{LOGLEVEL:log_level}\\]\\s+(\\[client %{IPORHOST:source_address}(:%{INT:source_port})?\\])? %{GREEDYDATA:message}.*",
+"(\\[%{DATA:apache_error_timestamp}\\] )?(\\[%{DATA:apache_error_module}:%{APACHE_LOGLEVEL:log_level}\\] \\[pid %{NUMBER:process_pid}(:tid %{NUMBER:process_thread_id})?\\]( \\[client %{IPORHOST:source_address}(:%{POSINT:source_port})?\\])?)? %{GREEDYDATA:message}.*"
+###apache-tomat###
+"%{IP:_tmp.sourceorusername} %{DATA:apache_tomcat.access.http.ident} %{USERNAME:apache_tomcat.access.http.useragent} \\[%{DATA:_tmp.timestamp}\\] \"%{DATA:_tmp.dissect_request}\" %{GREEDYDATA:_tmp.dissectgrok}"
+"%{WORD:http.request.method} %{PATH:url.original} HTTP/%{BASE16FLOAT:http.version}"
+"%{GREEDYDATA:url_path}.%{WORD:url_extension}"
+###barcuda-waf###
+"^.*<%{DATA:_temp_syspri}>%{TIMESTAMP_ISO8601:_temp_datetime} %{ISO8601_TIMEZONE:_temp_timezone}\\s*%{GREEDYDATA:_temp_full_message}.*$"
+###brocode-switch###
+"<%{POSINT:syslog_priority}>(\\s)*%{SPACE}%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{GREEDYDATA}%{IP:source_ip}%{GREEDYDATA:msg}"
+<%{POSINT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{DATA:event_action} %{DATA} %{GREEDYDATA:event_description}
+"<%{POSINT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD} ?%{WORD:network_protocol}\\W*%{WORD:event_type}\\W*%{WORD:event_outcome}[\\W\\w]*\\:%{SPACE}%{IP:source_ip}.*"
+"<%{POSINT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD:network_protocol}: VLAN %{INT:vlan_id} (?<network_name>[\\w\\s]*[\\d/]*) %{DATA:event_reason} \\(%{WORD:event_action}.*",
+"<%{POSINT:syslog_priority}>%{DATA}:\\s*%{WORD:hostname}\\s*%{WORD:network_protocol}: VLAN %{INT:vlan_id} (?<network_name>[\\w\\s]*[\\d/]*) %{DATA:event_reason} \\(%{WORD:event_action}.*",
+"<%{POSINT:syslog_priority}> %{DATA}( %{HOSTNAME:hostname}|) %{WORD:network_protocol}: VLAN %{INT:vlan_id} (?<network_name>[\\w\\s]*[\\d/]*) %{DATA:event_reason} \\(%{WORD:event_action}.*",
+"<%{POSINT:syslog_priority}>%{DATA}%{WORD:network_protocol}: VLAN %{INT:vlan_id} (?<network_name>[\\w\\s]*[\\d/]*) %{DATA:event_reason} \\(%{WORD:event_action}.*",
+"<%{INT:syslog_priority}>%{WORD:duration}:%{WORD:hostname} %{WORD:event_type}: %{WORD} %{INT:event_id} %{GREEDYDATA:msg}",
+"<%{INT:syslog_priority}> %{SYSLOGTIMESTAMP:event_timestamp}\\s%{DATA:hostname}\\s%{DATA:network_protocol}:\\s%{GREEDYDATA:event_action}"
+"^<%{POSINT:syslog_priority}>(\\s|)%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD:event_type}: Interface %{DATA:network_name}, %{GREEDYDATA:event_action}",
+"<%{INT:syslog_priority}> %{SYSLOGTIMESTAMP:event_timestamp} %{WORD:event_type}:%{GREEDYDATA:msg}",
+"<%{POSINT:syslog_priority}>(\\s|)%{DATA}:%{WORD:event_type}: Interface %{DATA:network_name}, %{GREEDYDATA:event_action}",
+"<%{INT:syslog_priority}>%{WORD:duration}:%{WORD:hostname} %{WORD:event_type}: %{WORD} %{GREEDYDATA:msg}"
+"<%{INT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD:event_type}: %{WORD:process_name}%{SPACE}%{WORD:event_action} %{WORD}%{SPACE}%{DATA:error_msg} from%{SPACE}%{DATA}%{IP:source_ip}%{SPACE}%{DATA}%{MAC:source_mac}%{SPACE}%{GREEDYDATA:msg}" ,
+"<%{INT:syslog_priority}>\\s*%{SYSLOGTIMESTAMP:event_timestamp}?(%{DATA}:)?%{DATA:hostname} %{WORD:event_type}: %{WORD:network_protocol}%{SPACE}%{WORD:event_action} %{WORD}%{SPACE}%{DATA:user_name} from%{SPACE}%{DATA}%{IP:source_ip}%{SPACE}%{DATA}%{MAC:source_mac}%{GREEDYDATA}"
+"<%{INT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD:event_type}: %{WORD:process_name}%{SPACE}%{WORD:event_action} %{WORD}%{SPACE}%{DATA:user_name} from%{SPACE}%{DATA}%{IP:source_ip}%{SPACE}%{DATA}%{MAC:source_mac}%{SPACE}%{GREEDYDATA:msg}",
+"<%{INT:syslog_priority}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp}?%{DATA} %{WORD:event_type}: %{WORD:network_protocol}%{SPACE}%{WORD:event_action} %{WORD}%{SPACE}%{DATA:user_name} from%{SPACE}%{DATA}%{IP:source_ip}%{SPACE}%{DATA}%{MAC:source_mac}%{SPACE}%{GREEDYDATA:msg}"
+"<%{POSINT:syslog_priority}> %{SYSLOGTIMESTAMP:event_timestamp} Test %{DATA:agent_name}: %{DATA:event_action} Error:\\s%{GREEDYDATA:error_message}",
+"<%{POSINT:syslog_priority}> %{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:hostname} %{DATA:agent_name}: %{DATA:event_action} Error:\\s%{GREEDYDATA:error_message}"
+###checkpoint###
+"<%{NUMBER}>1 %{TIMESTAMP_ISO8601:timestamp} %{DATA:hostname} %{DATA:appname} %{DATA:procid} - \\[%{GREEDYDATA:message}\\].*"
+<%{NUMBER}>1 %{TIMESTAMP_ISO8601:timestamp}-%{DATA:tz} %{IP:host} %{DATA:appname} - %{DATA} \\[%{GREEDYDATA:message}\\].*"
+###checkpoint-harmony###
+"<%{NUMBER}>1 %{TIMESTAMP_ISO8601:timestamp} %{DATA:hostname} %{DATA:appname} %{DATA:procid} - \\[%{GREEDYDATA:message}\\].*"
+###checkpoint-ngav###
+".*CEF:\\s*%{INT:cef_version}\\|%{DATA:vendor}\\|%{DATA:product}\\|%{DATA}\\|%{DATA:action}\\|%{DATA:file_type}\\|%{DATA:severity}\\|%{GREEDYDATA:kv_fields_cef}.*",
+".*<%{INT:syslog}>.\\s*%{TIMESTAMP_ISO8601:timestamp}\\s%{HOSTNAME:hostname}\\s%{WORD}\\s%{INT:event_id}\\W*%{GREEDYDATA:syslog_kv_fields}\\].*"
+###cisco-access-point###
+<%{INT:syslog_pri}>%{INT:syslog_version} %{NUMBER:timestamp} %{DATA:host_name} (?:%{DATA:event_type}\\s)
+###checkpoinr-asa###
+"%{WORD:network_transport} Connection denied by %{WORD:network_direction} list %{WORD:_temp_cisco_list_id} src %{IP:source_address} dest %{IP:destination_address}",
+    "%{GREEDYDATA:event_data.raw}" 
+%{NOTSPACE:network.direction} ((protocol %{POSINT:network.iana_number})|%{NOTSPACE:network.transport}) src %{NOTSPACE:_temp_.cisco.source_interface}:%{NOTSPACE:source.address}/%{POSINT:source.port} (%{DATA})?dst %{NOTSPACE:_temp_.cisco.destination_interface}:%{NOTSPACE:destination.address}/%{POSINT:destination.port}(%{GREEDYDATA})?",
+    "Deny %{NOTSPACE:network.direction} ((protocol %{POSINT:network.iana_number})|%{NOTSPACE:network.transport}) src %{NOTSPACE:_temp_.cisco.source_interface}:%{NOTSPACE:source.address}(/%{POSINT:source.port})? (%{DATA})?dst %{NOTSPACE:_temp_.cisco.destination_interface}:%{NOTSPACE:destination.address}(/%{POSINT:destination.port})?(%{GREEDYDATA})?",
+    "%{GREEDYDATA:event_data.raw}"
+ aliases: {
+    "SYSLOG_HEADER": "(?:%{SYSPRIORITY}\\s*)?(?:%{FTD_DATE:_temp_.raw_date}:?\\s+)?(?:%{PROCESS_HOST}|%{HOST_PROCESS})(?:{DATA})?%{SYSLOG_END}?",
+    "SYSPRIORITY": "<%{INT:log.syslog.priority}>",
+    # Beginning with version 6.3, Firepower Threat Defense provides the option to enable timestamp as per RFC 5424.
+    "FTD_DATE": "(?:%{TIMESTAMP_ISO8601}|%{ASA_DATE})",
+    "ASA_DATE": "(?:%{DAY} )?%{MONTH}  *%{MONTHDAY}(?: %{YEAR})? %{TIME}(?: %{TZ:_temp_.tz})?",
+    "TZ": "(?:[APMCE][SD]T|UTC)",
+    "TIMESTAMP_ISO8601": "%{YEAR}-%{MONTHNUM}-%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?%{ISO8601_TIMEZONE:_temp_.tz}?",
+    "ISO8601_TIMEZONE": "(?:Z|[+-]%{HOUR}(?::?%{MINUTE}))",
+    "PROCESS": "(?:[^%\\s:\\[]+)",
+    "SYSLOG_END": "(?:(:|\\s)\\s+)",
+    # exactly match the syntax for firepower management logs
+    "PROCESS_HOST": "(?:%{PROCESS:process.name}:\\s%{SYSLOGHOST:host.name})",
+    "HOST_PROCESS": "(?:%{SYSLOGHOST:host.name}:?\\s+)?(?:%{PROCESS:process.name}?(?:\\[%{POSINT:process.pid}\\])?)?"
+    }
+  )
+##cisco-dnac##
+"<%{INT:syslog_priority}>%{INT:syslog_version}\\s*%{TIMESTAMP_ISO8601:event_created}\\s*%{IP:observer_ip}\\s*%{DATA:observer_name}\\s- - -\\s*%{GREEDYDATA:json_msg}"
+###cisco-duo###
+"^%{IPV4:cisco_duo_access_device_ip}:(?<cisco_duo_access_device_port>([0-9]+))$",
+"^\\[%{IPV6:cisco_duo_access_device_ip}\\]:(?<cisco_duo_access_device_port>([0-9]+))$",
+"^(?<cisco_duo_access_device_ip>(([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})):(?<cisco_duo_access_device_port>([0-9]+))$",
+"%{IPV6:cisco_duo_access_device_ip}(?: port |[p#.])(?<cisco_duo_access_device_port>([0-9]+))"
+"^%{IPV4:cisco_duo_auth_device_ip}:(?<cisco_duo_auth_device_port>([0-9]+))$",
+"^\\[%{IPV6:cisco_duo_auth_device_ip}\\]:(?<cisco_duo_auth_device_port>([0-9]+))$",
+"^(?<cisco_duo_auth_device_ip>(([0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4})):(?<cisco_duo_auth_device_port>([0-9]+))$",
+"%{IPV6:cisco_duo_auth_device_ip}(?: port |[p#.])(?<cisco_duo_auth_device_port>([0-9]+))"
+###cisco-fabric###
+"^<%{NUMBER:cisco_nexus.log.priority_number}>%{NUMBER:cisco_nexus.log.sequence_number}:%{SPACE}(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name}):%{SPACE}%{SYSLOGTIMESTAMP:temp.timestamp}:%{SPACE}%{NEXUS_BODY}$",
+"^<%{NUMBER:cisco_nexus.log.priority_number}>%{SYSLOGTIMESTAMP:cisco_nexus.log.syslog_time}%{SPACE}(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name})%{SPACE}%{NUMBER:cisco_nexus.log.sequence_number}:%{SPACE}%{SYSLOGTIMESTAMP:temp.syslog_timestamp}%{SPACE}%{WORD:cisco_nexus.log.timezone}:%{SPACE}%{NEXUS_BODY}$",
+"^<%{NUMBER:cisco_nexus.log.priority_number}>%{SYSLOGTIMESTAMP:cisco_nexus.log.syslog_time}%{SPACE}(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name})%{SPACE}(?::)?%{SPACE}%{NEXUS_TIMESTAMP_TIMEZONE:temp.timestamp}:%{SPACE}%{NEXUS_BODY}$",
+"^<%{NUMBER:cisco_nexus.log.priority_number}>%{SYSLOGTIMESTAMP:temp.syslog_timestamp}%{SPACE}(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name})%{SPACE}(?::)?%{SPACE}%{WORD:cisco_nexus.log.timezone}:%{SPACE}%{NEXUS_BODY}$",
+"^<%{NUMBER:cisco_nexus.log.priority_number}>(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name}):%{SPACE}%{NEXUS_TIMESTAMP_TIMEZONE:temp.timestamp}:%{SPACE}%{NEXUS_BODY}$",
+"^<%{NUMBER:cisco_nexus.log.priority_number}>:%{SPACE}%{NEXUS_TIMESTAMP_TIMEZONE:temp.timestamp}:%{SPACE}%{NEXUS_BODY}$",
+"^%{NEXUS_TIMESTAMP:temp.timestamp}%{SPACE}(%{IP:cisco_nexus.log.ip_address}|%{NOTSPACE:cisco_nexus.log.switch_name})%{SPACE}%{NEXUS_BODY}$",
+"<%{NUMBER:cisco_nexus.log.priority_number}>%{SYSLOGTIMESTAMP:cisco_nexus.log.syslog_time} (%{IP:observer.ip}|%{DATA:observer.name}) %%{DATA:cisco_nexus.log.facility}-%{INT:event.severity}-%{DATA:event.code} %{DATA:event_data.object_path} %{GREEDYDATA:message}"
+###cisco-fmc###
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*\\[%{INT:event_data.id}\\]%{DATA}:(?<log.logger>%{DATA:event.module}\\.%{DATA})\\s\\[%{WORD:log.level}\\]\\s(?<message>%{DATA:service.name}\\s%{GREEDYDATA}(%{IP:destination.ip}%{GREEDYDATA})).*",
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*\\[%{INT:event_data.id}\\]%{DATA}:(?<log.logger>%{DATA:event.module}\\.%{DATA})\\s\\[%{WORD:log.level}\\]\\s(?<message>%{DATA:service.name}\\s%{GREEDYDATA}).*"
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{TIMESTAMP_ISO8601}\\(%{DATA}\\):\\s(?<message>%{DATA:network.protocol}\\sState:%{GREEDYDATA}).*"
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*\\[%{INT:event_data.id}\\]\\s*(?<message>%{DATA}:%{WORD:event.action}\\s*\\[%{WORD:log.level}\\]\\s*%{DATA}%{IP:source.ip}:%{INT:source.port}%{GREEDYDATA}).*"
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*\\[%{INT:event_data.id}\\]\\s*(?<message>%{DATA}:%{WORD:event_data.action}\\s*\\[%{WORD:log.level}\\]%{GREEDYDATA}).*"
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*%{DATA:event_data.name}\\[%{INT:event_data.id}\\]:\\s*%{GREEDYDATA:message}.*",
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*\\[%{INT:event_data.id}\\]\\s*(?<message>%{DATA}\\[%{WORD:log.level}\\]%{GREEDYDATA}).*",
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*(?:%{TIMESTAMP_ISO8601}%{DATA}:\\s*|\\.\\.)%{GREEDYDATA:message}.*",
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:host.name}\\s*%{DATA:process.name}\\[%{INT:process.id}\\]:\\s*%{GREEDYDATA:message}.*",
+"<%{INT:log.syslog.priority}>%{SYSLOGTIMESTAMP:event_timestamp}\\s*%{HOSTNAME:hostname}\\s*%{GREEDYDATA:message}"
+###cisco-ftd-firewall###
+ aliases: {
+            "SYSLOG_HEADER": "(?:%{SYSPRIORITY}\\s*)?(?:%{FTD_DATE:event_data.raw_date}:?\\s+)?(?:%{PROCESS_HOST}|%{HOST_PROCESS})(?:{DATA})?%{SYSLOG_END}?",
+            "SYSPRIORITY": "<%{INT:log.syslog.priority}>",
+            # Beginning with version 6.3, Firepower Threat Defense provides the option to enable timestamp as per RFC 5424.
+            "FTD_DATE": "(?:%{TIMESTAMP_ISO8601}|%{ASA_DATE})",
+            "ASA_DATE": "(?:%{DAY} )?%{MONTH}  *%{MONTHDAY}(?: %{YEAR})? %{TIME}(?: %{TZ:event_data.tz})?",
+            "TZ": "(?:[APMCE][SD]T|UTC)",
+            "TIMESTAMP_ISO8601": "%{YEAR}-%{MONTHNUM}-%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?%{ISO8601_TIMEZONE:event_data.tz}?",
+            "ISO8601_TIMEZONE": "(?:Z|[+-]%{HOUR}(?::?%{MINUTE}))",
+            "PROCESS": "(?:[^%\\s:\\[]+)",
+            "SYSLOG_END": "(?:(:|\\s)\\s+)",
+            # exactly match the syntax for firepower management logs
+            "PROCESS_HOST": "(?:%{PROCESS:process.name}:\\s%{SYSLOGHOST:host.name})",
+            "HOST_PROCESS": "(?:%{SYSLOGHOST:host.name}:?\\s+)?(?:%{PROCESS:process.name}?(?:\\[%{POSINT:process.pid}\\])?)?"
+        }
+"%{FTD_PREFIX}-(?:%{FTD_SUFFIX:event_data.cisco.suffix}?-)?%{INT:event.severity}-%{POSINT:event_data.cisco.message_id}?:?\\s*%{GREEDYDATA:message}",
+###cisco-iso###
+"^%{CISCO_PRIORITY_MSGCOUNT}?%{TIMESTAMP_ISO8601:event_data.cisco_timestamp} %{NOTSPACE:event_data.syslog_hostname} %{GREEDYDATA:event_data.message}$",
+"^%{CISCO_PRIORITY_MSGCOUNT}?%{SYSLOGTIMESTAMP} %{IP} %{CISCO_HOSTNAME:event_data.syslog_hostname}: (?:%{NUMBER:event_data.sequence}: )?(?:%{CISCO_UPTIME:event_data.uptime}|%{CISCO_TIMESTAMP}): %{GREEDYDATA:event_data.message}$",
+"^%{CISCO_PRIORITY_MSGCOUNT}?%{SYSLOGTIMESTAMP} (?:%{IP}|%{CISCO_HOSTNAME:event_data.syslog_hostname}) %{NUMBER:event_data.sequence}: (?:%{CISCO_UPTIME:event_data.uptime}|%{CISCO_TIMESTAMP}): %{GREEDYDATA:event_data.message}$",
+"^%{CISCO_PRIORITY_MSGCOUNT}?(?:(?:%{CISCO_HOSTNAME:event_data.syslog_hostname}|%{IP})[:]? )?(?:%{NUMBER:event_data.sequence}: )?(?:%{CISCO_UPTIME:event_data.uptime}|%{CISCO_TIMESTAMP}): %{GREEDYDATA:event_data.message}$",
+"^%{CISCO_PRIORITY_MSGCOUNT}?%{SYSLOGTIMESTAMP} (?:%{IP:event_data.syslog_hostname}|%{CISCO_HOSTNAME:event_data.syslog_hostname}) %{GREEDYDATA:event_data.event_data.message}$",
+"^%{SYSLOGTIMESTAMP} (?:%{IP}|%{HOSTNAME:event_data.syslog_hostname}) %{CISCO_PRIORITY_MSGCOUNT}?(?:%{NUMBER:event_data.sequence}: )(\\*)?(?:%{CISCO_UPTIME:event_data.uptime}|%{CISCO_TIMESTAMP}): %{GREEDYDATA:event_data.message}$",
+"^%{SYSLOGTIMESTAMP} (?:%{IP}|%{HOSTNAME:event_data.syslog_hostname}) %{CISCO_PRIORITY_MSGCOUNT}?(?:%{NUMBER:event_data.sequence}: )%{GREEDYDATA:event_data.message}$",
+"%{SYSLOGTIMESTAMP} (?:%{IP}|%{HOSTNAME:event_data.syslog_hostname}) (?:%{NONNEGINT:event_data.message_count}: )(%{SYSLOGTIMESTAMP:event_data.cisco_timestamp}( UTC|): )?%{GREEDYDATA:event_data.message}$",
+"^%{SYSLOGTIMESTAMP:event_data.cisco_timestamp}: %{GREEDYDATA:event_data.message}$",
+"^.%{SYSLOGTIMESTAMP:event_data.cisco_timestamp}: %{GREEDYDATA:event_data.message}$",
+"^%{CISCO_PRIORITY_MSGCOUNT}%{GREEDYDATA:event_data.message}$"
+"ISO8601_TIMEZONE": "(?:Z|[+-]%{HOUR}(?::?%{MINUTE}))",
+"TIMESTAMP_ISO8601": "%{YEAR}-%{MONTHNUM}-%{MONTHDAY}[T ]%{HOUR}:?%{MINUTE}(?::?%{SECOND})?%{ISO8601_TIMEZONE:event_data.tz}?",
+"CISCO_PRIORITY_MSGCOUNT": "<%{NONNEGINT:event_data.syslog_priority}>(?:%{NONNEGINT:event_data.message_count})?(?:: )?",
+"CISCO_TIMESTAMP": "[*]?%{CISCOTIMESTAMP_EX:event_data.cisco_timestamp}(?: %{CISCO_TZ:event_data.tz})?",
+"CISCOTIMESTAMP_EX": "(%{CISCOTIMESTAMP})|(%{YEAR} %{MONTH} %{MONTHDAY} %{TIME})",
+"CISCO_UPTIME": "[0-9a-zA-Z]+",
+"CISCO_HOSTNAME": "[a-zA-Z][.0-9a-zA-Z_-]{0,253}[0-9a-zA-Z]?",
+"CISCO_TZ": "[a-zA-Z]{1,4}([+-]\\d{1,2}|[+-]\\d{2}:\\d{2})?"
+##cisco-ise###
+"^(?:<%{NUMBER:log_syslog_priority}>)?%{SYSLOGTIMESTAMP:syslog_timestamp} %{ISO8601_TIMEZONE:syslog_timezone} (%{IP:host_ip}|%{DATA:host_hostname}) %{DATA:log_category_name} %{GREEDYDATA:syslog_message}$",
+"^(?:<%{NUMBER:log_syslog_priority}>)?%{SYSLOGTIMESTAMP:syslog_timestamp} (%{IP:host_ip}|%{DATA:host_hostname}) %{DATA:log_category_name} %{GREEDYDATA:syslog_message}$",
+"^%{TIMEONLYSTAMP_ISO8601:syslog_timestamp}%{ISO8601_TIMEZONE:syslog_timezone} (%{IP:host_ip}|%{DATA:host_hostname}) %{DATA:log_category_name} %{GREEDYDATA:syslog_message}$",
+"^%{DATA:log_category_name} %{DATA:log_message_id} %{NONNEGINT:log_segment_total} %{NONNEGINT:log_segment_number} %{GREEDYDATA:syslog_message}$"
+"^%{NOTCOLON:log_severity_level}%{SPACE}: %{NOTCOLON:event_action}%{SPACE}: %{GREEDYDATA:message}$",
+"^%{NUMBER:log_message_id} %{NUMBER:log_segment_total} %{NUMBER:log_segment_number} %{GREEDYDATA:message}$"
+###cisco-rms###
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{GREEDYMULTILINE:syslog_message}",
+"%{TIMESTAMP_ISO8601:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+### Patterns for System Authorization logs
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?+(?:-|%{TIMESTAMP:syslog_timestamp})+(?:-|%{IPORHOST:host_hostname}) +(?:-|%{SYSLOG5424PRINTASCII:process_name})+(?:-|%{POSINT:process_pid}) +(?:-|%{SYSLOG5424PRINTASCII:event_code})+(?:-|%{SYSLOG5424SD:syslog5424_sd})?+%{GREEDYDATA:syslog_message}$",
+"^%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$"
+"%{GREEDYDATA}%{DATA}:%{USER:user.name}\\s*from\\s*(?<user_agent_os_name>%{WORD}\\s%{WORD})\\s*%{WORD}\\s*(?<user_agent_name>%{WORD}\\s%{WORD})\\(%{DATA:user_agent.version}\\)%{GREEDYDATA}"
+###aws-clouldfront###
+".*(?<date>%{YEAR}-%{MONTHNUM}-%{MONTHDAY})\\s(?<time>%{HOUR}:%{MINUTE}:%{SECOND})\\s%{DATA:x_edge_location}\\s%{NUMBER:sc_bytes}\\s(%{IPV6:c_ip}|%{IPV4:c_ip})\\s%{WORD:cs_method}\\s%{HOSTNAME:cs_host}\\s%{URIPATH:cs_uri_stem}\\s%{NUMBER:cs_status}\\s(-|%{URI:cs_referer})\\s%{DATA:cs_user_agent}\\s(-|%{DATA:cs_uri_query})\\s(-|%{DATA:cs_cookie})\\s(-|%{WORD:x_edge_result_type})\\s(-|%{DATA:x_edge_request_id})\\s(-|%{HOSTNAME:x_host_header})\\s(-|%{WORD:cs_protocol})\\s(-|%{NUMBER:cs_bytes})\\s(-|%{NUMBER:time_taken})\\s((?<x_forwarded_for>(((%{IPV4})(,\\s?%{IPV4})*)|((%{IPV6})(,\\s?%{IPV6})*)|%{HOSTPORT}))|-)\\s(-|%{DATA:ssl_protocol})\\s(-|%{DATA:ssl_cipher})\\s(-|%{WORD:x_edge_response_result_type})\\s(-|%{DATA:cs_protocol_version})\\s(-|%{WORD:fle_status})?\\s?(-|%{WORD:fle_encrypted_fields})?\\s?(-|%{NUMBER:c_port})?\\s?(-|%{NUMBER:time_to_first_byte})?\\s?(-|%{WORD:x_edge_detailed_result_type})?\\s?(-|%{DATA:sc_content_type})\\s(-|%{NUMBER:sc_content_len})\\s?(-|%{NUMBER:sc_range_start})?\\s?(-|%{NUMBER:sc_range_end})?\\s?.*",
+    ".*%{GREEDYDATA}.*"
+###aws-loadblancer###
+"%{TIMESTAMP_ISO8601:timestamp} %{IP:source_ip} %{INT:source_port} %{INT:listener} %{DATA:ssl_protocol} %{DATA:ssl_cipher} %{DATA:tls_handshake_latency} %{DATA:leaf_client_cert_subject} ((NotBefore=%{DATA:leaf_client_cert_not_before})|-)((;NotAfter=%{DATA:leaf_client_cert_not_after} )| -)%{DATA:leaf_client_cert_serial_number}\\s*%{WORD:tls_verify_status}(-|:%{GREEDYDATA:tls_error_code}| %{GREEDYDATA}|)",
+"%{WORD:type} %{BASE16FLOAT:tls_handshake_time.ms} %{TIMESTAMP_ISO8601:timestamp} %{DATA:name} %{DATA:listener} %{IP:source_ip}:%{INT:source_port} %{IP:backend.ip}:%{INT:backend.port} %{DATA} %{DATA} %{DATA:source_bytes} %{DATA:destination_bytes} %{DATA} %{DATA:chosen_cert.arn} %{DATA} %{DATA:ssl_cipher} %{DATA:ssl_protocol} %{DATA} %{DATA:destination_domain} %{DATA:alpn_be_protocol} %{DATA:alpn_fe_protocol} %{DATA:alpn_client_preference_list} %{GREEDYDATA:tls_connection_creation_time}",
+"%{GREEDYDATA}"
+###azure-activity###
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}/RESOURCEGROUPS/%{GROUPID:azure.resource.group}/PROVIDERS/%{PROVIDERNAME:azure.resource.provider}/NAMESPACES/%{NAMESPACE:azure.resource.namespace}/AUTHORIZATIONRULES/%{RULE:azure.resource.authorization_rule}",
+"/subscriptions/%{SUBID:azure.subscription_id}/resourceGroups/%{GROUPID:azure.resource.group}/providers/%{PROVIDERNAME:azure.resource.provider}/namespaces/%{NAMESPACE:azure.resource.namespace}/authorizationRules/%{RULE:azure.resource.authorization_rule}"
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}/RESOURCEGROUPS/%{GROUPID:azure.resource.group}/PROVIDERS/%{PROVIDERNAME:azure.resource.provider}/%{NAME:azure.resource.name}",
+"/subscriptions/%{SUBID:azure.subscription_id}/resourceGroups/%{GROUPID:azure.resource.group}/providers/%{PROVIDERNAME:azure.resource.provider}/%{NAME:azure.resource.name}",
+"/providers/%{PROVIDER:azure.resource.provider}",
+"/PROVIDERS/%{PROVIDER:azure.resource.provider}",
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}/PROVIDERS/%{PROVIDERNAME:azure.resource.provider}",
+"/subscriptions/%{SUBID:azure.subscription_id}/providers/%{PROVIDERNAME:azure.resource.provider}",
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}/RESOURCEGROUPS/%{GROUPID:azure.resource.group}",
+"/subscriptions/%{SUBID:azure.subscription_id}/resourceGroups/%{GROUPID:azure.resource.group}",
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}",
+"/subscriptions/%{SUBID:azure.subscription_id}"
+###azure-add-auditlogs###
+"/SUBSCRIPTIONS/%{SUBID:azure.subscription_id}/RESOURCEGROUPS/%{GROUPID:azure.resource.group}/PROVIDERS/%{PROVIDERNAME:azure.resource.provider}/NAMESPACES/%{NAMESPACE:azure.resource.namespace}/AUTHORIZATIONRULES/%{RULE:azure.resource.authorization_rule}",
+"/subscriptions/%{SUBID:azure.subscription_id}/resourceGroups/%{GROUPID:azure.resource.group}/providers/%{PROVIDERNAME:azure.resource.provider}/namespaces/%{NAMESPACE:azure.resource.namespace}/authorizationRules/%{RULE:azure.resource.authorization_rule}"
+###gcp-loadblancer###
+"^%{IP:source_address}(:%{POSINT:source_port})?$
+"%{WORD:network_protocol}/%{DATA:http_version}"
+"^%{IP:destination_nat_ip}(:%{POSINT:destination_nat_port})?$
+###cyber2.0###
+%{TIMESTAMP_ISO8601:timestamp1}\\s*%{HOSTNAME:observer_name}\\s*%{INT:severity}\\s*%{DATA:log_level} %{GREEDYDATA:json_message}"
+###dell-powerswitch###
+"<%{INT:log.syslog.priority}>%{NUMBER:log.syslog.version}\\s*%{TIMESTAMP_ISO8601:timestamp2}\\s*%{HOSTNAME:host.name}\\s*%{WORD:process.name}\\s*%{POSINT:process.pid}\\s*- -\\s*%{DATA}\\(%{WORD:observer.os.version}\\)\\s*%%{DATA:dell.emc.tag}:\\s*(?<dell.emc.trap_type>%{WORD}\\s*%{WORD})\\s*:\\s*%{DATA:dell.emc.object_id}Dest:\\s*%{IP:destination.ip}:%{POSINT:destination.port}"
+"<%{POSINT:log.syslog.priority}>%{NUMBER:log.syslog.version}\\s%{TIMESTAMP_ISO8601:timestamp2}\\s%{HOSTNAME:host.name}\\s%{WORD:process.name}\\s%{POSINT:process.pid}\\s%{DATA}\\(%{DATA:observer.os.version}\\)\\s%{DATA:dell.emc.tag}:\\s%{DATA:event.reason}:%{GREEDYDATA:.message}"
+"<%{POSINT:log.syslog.priority}>%{NUMBER:log.syslog.version}\\s%{TIMESTAMP_ISO8601:timestamp2}\\s%{HOSTNAME:host.name}\\s%{WORD:process.name}\\s%{POSINT:process.pid}\\s%{DATA}\\(%{USERNAME:observer.os.version}\\)\\s%{DATA:dell.emc.tag}:\\s%{DATA:event.reason}:%{GREEDYDATA:observer.ingress.interface.name}"
+"<%{POSINT:log.syslog.priority}>%{NUMBER:syslogversion}\\s%{TIMESTAMP_ISO8601:timestamp2}\\s%{HOSTNAME:host.name}\\s%{WORD:process.name}\\s%{POSINT:process.pid}%{DATA}\\(%{USERNAME:observer.os.version}\\)\\s%%{DATA:dell.emc.tag}\\s%{DATA:event.reason}(MESSAGE=%{GREEDYDATA:message})?(:%{GREEDYDATA:emc_message})?",
+"<%{POSINT:log.syslog.priority}>\\s*%{SYSLOGTIMESTAMP:timestamp2}\\s*%{HOSTNAME:host.name}\\s*%{WORD:process.name}\\[%{DATA:subtype}]:\\s*%{DATA:log.origin.file.name}\\(%{POSINT:log.origin.file.line}\\)\\s*%{INT:event.id}\\s*%%\\s*%{GREEDYDATA:emc_message}"
+###dell-rms###
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{GREEDYMULTILINE:syslog_message}",
+"%{TIMESTAMP_ISO8601:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+### Patterns for System Authorization logs
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?+(?:-|%{TIMESTAMP:syslog_timestamp})+(?:-|%{IPORHOST:host_hostname}) +(?:-|%{SYSLOG5424PRINTASCII:process_name})+(?:-|%{POSINT:process_pid}) +(?:-|%{SYSLOG5424PRINTASCII:event_code})+(?:-|%{SYSLOG5424SD:syslog5424_sd})?+%{GREEDYDATA:syslog_message}$",
+"^%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{GREEDYMULTILINE:syslog_message}$"
+"%{GREEDYDATA:kv_fields} Message%{GREEDYDATA} from %{IP:source.ip}%{DATA}and%{SPACE}%{USER:source.user.name}"
+"%{GREEDYDATA:kv_fields}\\sMessage:\\s*%{GREEDYDATA:event_data_message}"
+###fortianalyzer###
+(?:<%{NUMBER:log_priority_number}>)?%{GREEDYDATA:syslog5424_sd}
+###hpe-rms###
+ "%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{GREEDYMULTILINE:syslog_message}",
+"%{TIMESTAMP_ISO8601:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+### Patterns for System Authorization logs
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?+(?:-|%{TIMESTAMP:syslog_timestamp})+(?:-|%{IPORHOST:host_hostname}) +(?:-|%{SYSLOG5424PRINTASCII:process_name})+(?:-|%{POSINT:process_pid}) +(?:-|%{SYSLOG5424PRINTASCII:event_code})+(?:-|%{SYSLOG5424SD:syslog5424_sd})?+%{GREEDYDATA:syslog_message}$",
+"^%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{WORD:application_name}%{SPACE}(?:- - -)%{SPACE}%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$"
+"%{DATA}Slot\\s%{INT:event_data.slot_number}%{DATA}ACTION:\\s%{DATA:event_data.action}:%{DATA}1\\.%{DATA:event_data.steps}\\s2\\.%{DATA:event_data.steps}\\s3\\.%{GREEDYDATA:event_data.steps}"
+###hpe-switch###
+".*<%{POSINT:syslog_pri}>%{INT:event_sev}\\s*%{TIMESTAMP_ISO8601:timestamp1}\\s*%{DATA:host_name}\\s%{DATA:process_name}\\s*%{INT:process_id} - - %{DATA}\\|%{DATA:event_id}\\|%{DATA:log_level}\\|%{DATA:event_source}\\|%{DATA}\\|%{GREEDYDATA:log_message}.*
+".*<%{POSINT:syslog_pri}>%{INT:event_sev}\\s*%{TIMESTAMP_ISO8601:timestamp1}\\s*%{DATA:host_name}\\s%{DATA:process_name}\\s*%{INT:process_id} - - %{DATA}\\|(?<event_id>[\\w\\s]*)\\|(?<log_level>[\\w\\s]*)\\|(?<event_source>[\\w\\s]*)\\|(?<event_code>[\\w\\s]*)\\|%{GREEDYDATA:log_message}.*"
+".*%{DATA}for\\s*interface\\s*%{DATA:Interface}(\\s*is%{GREEDYDATA}|:).*",
+".*on\\s*interface\\s*%{DATA:Interface}(\\s+).*"
+".*%{WORD:nw_protocol}\\s*neighbor\\s*%{MAC:src_mac}\\s*%{DATA}\\s*on\\s*(?<Interface>%{BASE10NUM}\\/%{BASE10NUM}\\/%{BASE10NUM}).*",
+".*(%{WORD:nw_protocol}\\s*|)neighbor\\s*%{DATA:src_host_name}\\s*%{WORD}\\s*on\\s*%{DATA:Interface}(\\s+).*",
+".*%{MAC:src_mac}.*"
+".*<%{POSINT:syslog_pri}>%{INT:syslog_version} %{TIMESTAMP_ISO8601:timestamp1}\\s*%{HOSTNAME:host_name} %{DATA} - %{DATA} - IP Origin: <%{IP:srcip}>,\\s*(%{INT:event_code})\\s*(:\\s*%{GREEDYDATA:event_description}\\s*|).*",
+".*<%{POSINT:syslog_pri}>%{INT:syslog_version} %{TIMESTAMP_ISO8601:timestamp1}\\s*%{HOSTNAME:host_name} %{DATA} - %{DATA} - IP Origin: <%{IP:srcip}>,\\s*%{GREEDYDATA:event_description}.*",
+".*<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:timestamp1}\\s*%{IP:hostip}\\s*%{NUMBER:syslog_facility_code}\\s*%{WORD:event_type}:\\s*%{HOSTNAME:syslog_facility_name}\\:\\s*%{GREEDYDATA:log_message}\\s*User\\s*.%{USERNAME:user_name}.%{DATA}\\s*%{IP:srcip}.*",
+".*<%{INT:syslog_pri}>%{SYSLOGTIMESTAMP:timestamp1}\\s*%{HOSTNAME:host_name}\\s%{WORD:process}\\[%{INT:process_id}\\].*%{IP:destip}.*",
+".*<%{INT:syslog_pri}>%{SYSLOGTIMESTAMP:timestamp1}\\s*.*from\\s*%{IP:srcip}/%{INT:srcport}\\s*to\\s*%{IP:destip}/%{INT:destport}.*",
+".*<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:timestamp1}\\s*%{IP:hostip}\\s*%{INT:event_id}\\s*%{DATA}:\\s*%{HOSTNAME:host_name}:\\s*%{GREEDYDATA:log_message}.*",
+".*<%{INT:syslog_pri}>\\s*%{SYSLOGTIMESTAMP:timestamp1}\\s%{IP:hostip}\\s*%{INT:process_id}\\s*%{DATA}SME\\s%{WORD:nw_transport}\\s%{WORD}\\s%{IP:srcip}%{GREEDYDATA}.*",
+".*<%{INT:syslog_pri}>\\s*%{SYSLOGTIMESTAMP:timestamp1}\\s%{IP:hostip}\\s*%{INT:process_id}\\s*%{WORD:nw_protocol}%{DATA}from\\s*%{IP:srcip}%{DATA}:\\s*%{USERNAME:user_name}%{GREEDYDATA}.*",
+".*<%{INT:syslog_pri}>\\s*%{SYSLOGTIMESTAMP:timestamp1}\\s%{IP:hostip}\\s*%{INT:process_id}\\s*%{DATA}:\\s*%{GREEDYDATA}\\s%{NOTSPACE:dst_domain}\\W.*",
+".*<%{INT:syslog_pri}>%{INT:syslog_version}\\s%{TIMESTAMP_ISO8601:timestamp1}\\s%{IP:hostip}\\s%{DATA}:\\s<%{HOSTNAME:host_name}>\\W*%{GREEDYDATA:message}\\s\\s.*"
+###hpe-wireless###
+"<%{NUMBER:log.syslog.priority}>(?<timestamp>%{SYSLOGTIMESTAMP}\\s*%{YEAR})\\s*%{IP:observer.ip}\\s*%{WORD:process.name}\\[%{INT:process.pid}\\]:\\s*<%{INT:event.id}>\\s*<%{WORD:log.level}>%{DATA}<%{IP:host.ip}\\s*%{MAC:host.mac}>\\s*%{GREEDYDATA:wlc_msg}",
+"<%{NUMBER:log.syslog.priority}>(?<timestamp>%{SYSLOGTIMESTAMP}\\s*%{YEAR})\\s*%{IP:observer.ip}\\s*%{DATA}<%{IP:host.ip}\\s*%{MAC:host.mac}>\\s*%{WORD:process.name}\\[%{INT:process.pid}\\]:\\s*%{GREEDYDATA:wlc_msg}"
+###ibm###
+"<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:event_created}\\s*%{HOSTNAME:host_name}\\s%{DATA:storage_device}:\\s*(?<IBM2072>[\\d]*)%{DATA}=\\s%{WORD:record_type}%{GREEDYDATA:kvfields}\\s\\:\\s(?<error_message>%{DATA},\\s%{DATA})%{GREEDYDATA:kvfields}",
+"<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:event_created}\\s*%{HOSTNAME:host_name}\\s%{DATA:storage_device}:\\s*%{DATA:message}\\sfor\\s*%{USERNAME:user_name}\\s%{DATA}\\s%{IP:src_ip}\\s%{GREEDYDATA}]",
+"<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:event_created}\\s*%{HOSTNAME:host_name}\\s%{DATA:storage_device}:\\s*%{GREEDYDATA:kvfields}"
+###lenovo-rms###
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+"%{SYSLOGTIMESTAMP:syslog_timestamp} %{GREEDYMULTILINE:syslog_message}",
+"%{TIMESTAMP_ISO8601:syslog_timestamp} %{SYSLOGHOST:host_hostname} %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?: %{GREEDYMULTILINE:syslog_message}",
+### Patterns for System Authorization logs
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?+(?:-|%{TIMESTAMP:syslog_timestamp})+(?:-|%{IPORHOST:host_hostname}) +(?:-|%{SYSLOG5424PRINTASCII:process_name})+(?:-|%{POSINT:process_pid}) +(?:-|%{SYSLOG5424PRINTASCII:event_code})+(?:-|%{SYSLOG5424SD:syslog5424_sd})?+%{GREEDYDATA:syslog_message}$",
+"^%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:application_name}%{SPACE}(?:- - -\\s*)%{GREEDYMULTILINE:syslog_message}$",
+"^<%{NONNEGINT:log_syslog_priority}>(?:%{NONNEGINT:system_auth_syslog_version} )?%{TIMESTAMP:syslog_timestamp} %{SYSLOGHOST:host_hostname}? %{DATA:process_name}(?:\\[%{POSINT:process_pid}\\])?:%{SPACE}%{GREEDYMULTILINE:syslog_message}$"
+###lenovo-stroeage###
+"<%{POSINT:syslog_pri}>%{NUMBER} %{TIMESTAMP_ISO8601:event_timestamp} %{NOTSPACE:host.name} %{NOTSPACE:event_dataset} - - \\[%{NUMBER:thread1}@%{NUMBER:thread2}\\] %{GREEDYDATA:msg_info}",
+"<%{POSINT:syslog_pri}>%{SYSLOGTIMESTAMP:event_timestamp} %{IPORHOST:host.name} %{WORD:program}:%{DATA:facility}; ;%{WORD:severity};%{GREEDYDATA:msg_info}"
+".*<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{WORD:event_host}\\(%{WORD}\\:%{DATA:host_os_name}\\) \\%%{DATA:event_action}: %{GREEDYDATA:lenovo_msg}.*"
+###iis-acesses###
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{NOTSPACE:iis.access.site_name}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:iis.access.cookie}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NOTSPACE:destination.domain}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:http.response.body.bytes}) (?:-|%{NUMBER:http.request.body.bytes}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{NOTSPACE:iis.access.site_name}) (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|HTTP/%{NUMBER:http.version}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:iis.access.cookie}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:http.response.body.bytes}) (?:-|%{NUMBER:http.request.body.bytes}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{NOTSPACE:iis.access.site_name}) (?:-|%{NOTSPACE:iis.access.server_name}) (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|HTTP/%{NUMBER:http.version}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:iis.access.cookie}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NOTSPACE:destination.domain}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:http.response.body.bytes}) (?:-|%{NUMBER:http.request.body.bytes}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} \\[%{IPORHOST}\\]\\(http://%{IPORHOST:destination.address}\\) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) \\[%{IPORHOST}\\]\\(http://%{IPORHOST:source.address}\\) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:iis.access.cookie}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time} (?:-|%{NOTSPACE:iis.access.server_name}) (?:-|%{IPORHOST:destination.address}) (?:-|%{WORD:http.request.method}) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) (?:-|%{IPORHOST:source.address}) (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub_status}) (?:-|%{NUMBER:iis.access.win32_status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded_ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time}\\s*%{IP:destination.address} (?<http.request.method>(GET|POST)) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) %{DATA:source.address} (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status.code}) (?:-|%{NUMBER:iis.access.sub.status}) (?:-|%{NUMBER:iis.access.win32.status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded.ip}))?",
+"%{TIMESTAMP_ISO8601:iis.access.time}\\s*(%{HOSTNAME:iis.access.site_name}|)\\s*%{IP:destination.address} (?<http_request_method>(GET|POST)) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) %{DATA:source.address} (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status.code}) (?:-|%{NUMBER:iis.access.sub.status}) (?:-|%{NUMBER:iis.access.win32.status}) (?:-|%{NUMBER:_temp.duration})( (?:-|%{IP:network.forwarded.ip}))?",
+"%{GREEDYDATA:message1}"
+"%{TIMESTAMP_ISO8601:iis.access.time}\\s*(%{DATA:iis.access.server_name}|)\\s*%{IP:destination.address} (?<http_request_method>(GET|POST)) (?:-|%{NOTSPACE:_temp_.url_path}) (?:-|%{NOTSPACE:_temp_.url_query}) (?:-|%{NUMBER:destination.port}) (?:-|%{NOTSPACE:user.name}) %{DATA:source.address} (?:-|%{NOTSPACE:user_agent.original}) (?:-|%{NOTSPACE:http.request.referrer}) (?:-|%{NUMBER:http.response.status_code}) (?:-|%{NUMBER:iis.access.sub.status}) (?:-|%{NUMBER:iis.access.win32.status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded.ip}))?.*",
+"%{TIMESTAMP_ISO8601:time}\\s*(%{HOSTNAME:name}|)\\s*%{IP:destinationaddress} (?<http_request_method>(GET|POST)) (?:-|%{NOTSPACE:_temp_url_path}) (?:-|%{NOTSPACE:_temp_url_query}) (?:-|%{NUMBER:destinationport}) (?:-|%{NOTSPACE:username}) %{DATA:sourceaddress} (?:-|%{NOTSPACE:user_agentoriginal}) (?:-|%{NOTSPACE:httprequestreferrer}) (?:-|%{NUMBER:httpresponsestatuscode}) (?:-|%{NUMBER:iisaccessstatus}) (?:-|%{NUMBER:iisaccesswin32status}) (?:-|%{NUMBER:_temp_.duration})( (?:-|%{IP:network.forwarded.ip}))?",
+"%{GREEDYDATA}"
+###iis-error###
+"%{TIMESTAMP_ISO8601:event_data.error_time} %{IPORHOST:source.address} %{NUMBER:source.port} %{IPORHOST:destination.address} %{IPORHOST:destination.port} (?:HTTP/%{NUMBER:http.version}|-) (?:%{WORD:http.request.method}|-) (?:-|%{NOTSPACE:_temp_.url_path}) (?:%{NUMBER}|-) (?:%{NUMBER:http.response.status_code}|-) (?:%{NUMBER}|-) (?:-|%{NOTSPACE:event_data.error.reason.phrase}) (?:-|%{NOTSPACE:event_data.error.queue.name}).*",
+"%{TIMESTAMP_ISO8601:event_data.error_time} %{IPORHOST:source.address} %{NUMBER:source.port} %{IPORHOST:destination.address} %{IPORHOST:destination.port} (?:HTTP/%{NUMBER:http.version}|-) (?:%{WORD:http.request.method}|-) (?:-|%{NOTSPACE:_temp_.url_path}) (?:%{NUMBER:http.response.status_code}|-) (?:%{NUMBER}|-) (?:-|%{NOTSPACE:event_data.error.reason.phrase}) (?:-|%{NOTSPACE:event_data.error.queue.name}).*"
+###netxgate-firewall###
+"<%{INT:syslog}>%{SYSLOGTIMESTAMP:syslog_timestamp} %{HOSTNAME:hostname} %{WORD}: %{DATA:event_reason} %{GREEDYDATA:kv_fields}"
+"%{DATA:obs_name}:%{DATA:rule_id}:%{DATA:event_action}:%{WORD:rule_name}.*"
+###nginx-error###
+"(?<timestamp>%{YEAR}/%{MONTHNUM2}/%{MONTHDAY}\\s%{TIME})\\s+\\[%{DATA:log_level}\\]\\s+%{NUMBER:process_pid}#%{NUMBER:process_thread_id}:\\s+(\\*%{NUMBER:nginx_error_connection_id})\\s?%{GREEDYDATA:message}.*"
+###openvpn###
+"^%{TIMESTAMPP:_tmp.timestamp} %{DATA:user.name}/%{SOURCE} %{GREEDYDATA:message}$",
+"^%{TIMESTAMPP:_tmp.timestamp} %{SOURCE} %{GREEDYDATA:message}$",
+"^%{TIMESTAMPP:_tmp.timestamp} %{GREEDYDATA:message}$"
+"^%{EVENTACTION:.event_data.event.type.name}: %{GREEDYDATA:_tmp.event.message}$",
+"^%{SIGNAL:.event_data.event.type.name}\\[%{WORD},%{DATA:.event_data.exit.code}\\]",
+"^\\[%{DATA}\\] %{CONINIT:.event_data.event.type.name}"
+###oracle-datbase###
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone} LENGTH : '%{INT:length}' ACTION :\\W%{INT}]\\W*'%{DATA:action}' %{DATA}:\\W\\w\\W\\s'%{DATA:database_user}' %{DATA}'%{DATA:privilege}' %{DATA} %{DATA}'%{WORD:client_terminal}' %{DATA}'%{INT:status}' %{DATA}'%{DATA:dbid}' %{DATA}'%{INT:session_id}' %{DATA}'%{DATA:user_host}' %{DATA}'%{DATA:client_address}' %{DATA}'%{INT:action_number}'.*",
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone}\\s+LENGTH : '%{INT:length}'\\s+ACTION\\s+:\\W%{INT}\\W*'%{DATA:action}'  DATABASE USER%{DATA}'%{DATA:database_user}'%{DATA}'%{DATA:privilege}' %{DATA} %{DATA}'%{WORD:client_terminal}' %{DATA}'%{INT:status}' %{DATA}'%{DATA:dbid}' %{DATA}'%{INT:session_id}' %{DATA}'%{DATA:user_host}' %{DATA}'%{DATA:client_address}' %{DATA}'%{INT:action_number}'.*",
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone}\\W+LENGTH\\W+%{INT:length}\\W+ACTION:\\W+%{INT}]\\W*'%{DATA:action}DATABASE USER%{DATA}'%{DATA:database_user}'%{DATA}'%{DATA:privilege}' %{DATA} %{DATA}'%{WORD:client_terminal}' %{DATA}'%{INT:status}' %{DATA}'%{DATA:dbid}' %{DATA}'%{INT:session_id}' %{DATA}'%{DATA:user_host}' %{DATA}'%{DATA:client_address}' %{DATA}'%{INT:action_number}'.*",
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone}\\s+LENGTH\\W+%{INT:length}\\W+%{DATA}\\s+\\W+%{INT:session_id}\\W+%{DATA}\\s+\\W+%{INT:entry_id}\\W+%{DATA}\\s+\\W%{INT:statement}\\W+%{DATA}\\s\\W%{USER:user_id}\\W+%{DATA}\\s\\W%{URIHOST:user_host}\\W+%{DATA}\\s\\W+%{DATA:terminal}\\W%{DATA}\\s+\\W%{INT:action}\\W+%{DATA}\\s\\W%{INT:returncode}\\W+%{DATA}\\s+\\W%{USER:creator}\\W+%{DATA}\\s+\\W%{WORD:obj_name}\\W+%{DATA}\\s+\\W(?<sec_actions>[\\w-]*)\\W+%{DATA}\\s\\W%{INT:ses_tid}\\W+%{DATA}\\s\\W%{USER:os_userid}\\W+%{DATA}\\s\\W%{INT:dbid}\\W+%{DATA}\\s+\\W%{USER:current_user}\\W+.*",
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone}\\s+LENGTH : '%{INT:length}'\\s+ACTION\\W+%{INT}\\W+'%{DATA:action}DATABASE USER%{DATA}'%{DATA:database_user}'.*",
+"(?<tmp_timestamp>%{DAY}\\s%{MONTH}\\s+%{INT}\\s+%{TIME}\\s+%{YEAR})\\s+%{ISO8601_TIMEZONE:timezone}\\s+LENGTH : '%{INT:length}'\\s+ACTION\\W+%{INT}\\W+(?<action>%{DATA}\\)\\s+%{DATA}').*"
+###palolto-firewall###
+"^%{DATA},%{TIMESTAMP:event.created},%{FIELD:observer.serial_number},%{FIELD:event_data.type},(?:%{FIELD:event_data.subtype})?,%{FIELD:_tmp.config_version},%{TIMESTAMP:_tmp.generated_time},%{GREEDYDATA:message}$",
+"^%{SYSLOGTIMESTAMP:_tmp.syslog_time} %{IPORHOST:observer.hostname} %{NOTSPACE:observer.serial_number},%{PANW_DATE:_tmp.generated_time},%{FIELD:event_data.type},%{GREEDYDATA:message}$"
+###postgrwsql-database###
+"%{TIMESTAMP_ISO8601:event_timestamp}\\s%{WORD:timezone}\\W*%{INT:process.pid}\\W*%{WORD:log.level}\\W*%{WORD:query_step} <unnamed>: %{GREEDYDATA:query} %{TIMESTAMP_ISO8601} \\w*\\W*\\w*\\W %{WORD}\\W*%{GREEDYDATA:details}",
+"%{TIMESTAMP_ISO8601:event_timestamp}\\s%{WORD:timezone}\\W*%{INT:process.pid}\\W*%{WORD:log.level}\\W*%{WORD:query_step} <unnamed>: %{GREEDYDATA:query_msg}"
+"%{TIMESTAMP_ISO8601:event_timestamp}\\s%{WORD:timezone}\\W*%{INT:process.pid}\\W*%{WORD:log.level}\\W*%{WORD:query_step}\\W*%{DATA}STATEMENT:\\W*%{GREEDYDATA:query}",
+"%{TIMESTAMP_ISO8601:event_timestamp}\\s%{WORD:timezone}\\W*%{INT:process.pid}\\W*%{WORD:log.level}\\W* bind %{GREEDYDATA:msg} %{TIMESTAMP_ISO8601} \\w*\\W*\\w*\\W %{WORD:query_step}\\W*%{GREEDYDATA:query}",
+"%{TIMESTAMP_ISO8601:event_timestamp}\\s%{WORD:timezone}\\W*%{INT:process.pid}\\W*%{WORD:log.level}\\s*:\\s*%{DATA:query_step}:\\s*%{GREEDYDATA:query}"
+###qnap-nas###
+"^(%{ECS_SYSLOG_PRI})?%{SYSLOGTIMESTAMP:timestamp} %{NAS} %{SYSLOGPROG}: %{LOG_TYPE:provider}: %{GREEDYDATA:_tmp.message}"
+"%{SHARED}, Application: %{DATA:qnap.nas.application}, Category: %{DATA:qnap.nas.category}, Content: %{DATA:message}$",
+"%{SHARED}, Connection type: %{DATA:qnap.nas.connection_type}, Accessed resources: %{RESOURCE}, Action: %{DATA:event.action}$"
+###rakus-switch###
+"<%{POSINT:syslogpri}>\\s*%{SYSLOGTIMESTAMP:event_timestamp}\\s%{DATA:hostname}\\s%{DATA}:\\s*%{DATA:event_action},\\s*intf\\s*%{DATA:interface},\\s*%{GREEDYDATA:msg}",
+"<%{POSINT:syslogpri}>\\s*%{SYSLOGTIMESTAMP:event_timestamp}\\s%{DATA:hostname}\\s%{GREEDYDATA:msg}"
+"<%{POSINT:syslogpri}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{WORD:network_protocol}\\W*%{WORD:event_type}\\W*%{WORD:event_outcome}[\\W\\w]*\\:%{SPACE}%{IP:srcip}",
+"<%{POSINT:syslogpri}>(\\s)*%{SYSLOGTIMESTAMP:event_timestamp} %{DATA:hostname} %{GREEDYDATA:msg}"
+".*%{DATA:process_name}\\: %{DATA:event_action}\\sat\\s%{IPV4:destip} (%{GREEDYDATA:error_message}\\s*Reason: %{GREEDYDATA:error_reason}|%{GREEDYDATA:error_message})",
+".*%{DATA}\\sat\\s%{IPV4:destip}%{GREEDYDATA}"
+###rakus-switch-wireless###
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} sudo:%{DATA:process_name}\\(%{DATA}\\):\\s*%{DATA:action} for user %{WORD:user_name}%{DATA}%{INT:user_id}.*",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} sudo:%{DATA:process_name}\\(%{DATA}\\):\\s*%{DATA:action} for user %{WORD:user_name}.*",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} [\\w]*..%{WORD:sudo}..%{GREEDYDATA:kv}",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}:\\W*%{USERNAME}\\W*%{GREEDYDATA:kv}"
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}\\[%{INT:process_pid}\\]:..(?<Timestamp>[\\w]*\\s[\\w]*\\s[\\w]*\\s[\\w]*\\s[\\w\\:]*)..%{WORD:pname}..(?<Mname>[\\w\\-]*)..%{LOGLEVEL:log_level}..[\\w]*.%{POSINT:fid}.[\\w]*.%{MAC:ap_mac},%{DATA}%{MAC:ueMac}%{DATA} %{GREEDYDATA:log_msg}" ,
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}\\[%{INT:process_pid}\\]:..(?<Timestamp>[\\w]*\\s[\\w]*\\s[\\w]*\\s[\\w]*\\s[\\w\\:]*)..\\[%{DATA}\\]\\[%{DATA}\\]\\[%{LOGLEVEL:log_level}\\]\\[%{DATA:kv1}\\]\\[%{DATA:file_name}:%{INT:file_line}\\]%{GREEDYDATA}",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}:%{DATA},%{WORD:event_type}\\W*%{GREEDYDATA:kv1}",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}:%{DATA},%{DATA},%{GREEDYDATA:kv}",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{WORD:process_name}.%{INT:process_pid}..%{DATA:log_level}.\\w+(?<clientmac>([a-fA-F\\d]\\{2}[:-]){5}[a-fA-F\\d]{2}([:-]\\d{2})*).*",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}(\\[%{INT:process_pid}\\]|): \\s*%{DATA:action} %{WORD} (of|for) user %{WORD:user_name}.*",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}:%{DATA}-\\s*\\w*\\W*%{MAC:ap_mac}\\W*%{GREEDYDATA:log_msg}",
+"<%{POSINT:syslog_priority}>%{SYSLOGTIMESTAMP:event_timestamp} %{HOSTNAME:host_name} %{DATA:process_name}: %{GREEDYDATA:log_msg}"
+###tacitine-firewall###
+"<%{NUMBER:sys_pri}>%{SYSLOGTIMESTAMP:event_created} %{DATA:hostname} %{DATA:appname}(:)? \\[%{DATA:procid}\\]\\s*(%{DATA}\\s)(?<message>IN=%{GREEDYDATA})",
+"<%{NUMBER:sys_pri}>%{SYSLOGTIMESTAMP:event_created} %{DATA:hostname} %{DATA:appname}(:)? \\[%{DATA:procid}\\]\\s%{DATA}\\s%{GREEDYDATA:message}",
+"<%{NUMBER:sys_pri}>%{SYSLOGTIMESTAMP:event_created} %{DATA:hostname} %{DATA:appname}:\\s*%{DATA}:%{DATA}\\s%{GREEDYDATA:message}"
+###trendmicro###
+".*<%{INT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created}\\s%{IP:src_ip}\\s\\w*:%{INT:cef_version}\\|%{DATA:vendor}\\|%{DATA:product}\\|%{DATA:version}\\|%{INT:sig_id}\\|%{DATA:event_action}\\|%{INT:event_severity}\\|%{DATA}\\s%{DATA}=%{WORD:suser}\\s%{DATA}=%{DATA:target}msg=(?<msg>\\w*\\s\\w*)\\s%{DATA}=%{WORD:TrendMicroDsTenant}\\s%{DATA}=%{INT:TrendMicroDsTenantId}.*",
+".*<%{INT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created}\\s%{IP:src_ip}\\s\\w*:%{INT:cef_version}\\|%{DATA:vendor}\\|%{DATA:product}\\|%{DATA:version}\\|%{INT:sig_id}\\|%{DATA:event_action}\\|%{INT:event_severity}\\|%{DATA}\\s%{DATA}=%{WORD:suser}\\s%{DATA}=%{DATA:target}%{DATA:msg}TrendMicroDsTenant=%{WORD:TrendMicroDsTenant}\\s\\w*=%{INT:TrendMicroDsTenantid}.*",
+".*%{INT}\\s<%{INT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created}\\s%{DATA}:%{INT:cef_version}\\|%{DATA:vendor}\\|%{DATA:product}\\|%{DATA:version}\\|%{INT:event_class_id}\\|%{DATA:event_name}\\|%{INT:event_severity}\\|\\w*=%{INT:cn1}\\s\\w*=%{DATA:cn1Label}\\sdvchost=%{DATA:dvchost}\\s%{DATA}=%{DATA:request}\\smsg=%{GREEDYDATA:msg}.*"
+###vmware-exi###
+"- - %{TIMESTAMP_ISO8601} In\\(05\\)\\s*host-%{WORD:host_id} <%{DATA:event_type}> %{GREEDYDATA:syslog_message}.*",
+"- - %{TIMESTAMP_ISO8601}\\s*%{WORD:log_level}\\s*%{WORD:process_name}\\[%{INT:process_id}\\]%{GREEDYDATA}opID=%{WORD:operation_id}\\]%{GREEDYDATA}SearchIndex\\s*--\\s*%{DATA:operation_name}-%{GREEDYDATA}%{UUID}.*",
+"- - %{IP:src_ip}\\s*%{DATA}\\[%{DATA}\\[%{DATA:thread}\\]%{DATA}%{WORD:http_method}\\s%{PATH:url_path}\\s*%{WORD:network_protocol}/%{BASE16FLOAT:http_version}%{DATA}%{INT:status_code}\\s*%{INT:request_byte}\\s*%{GREEDYDATA:syslog_message}",
+"- - \\[%{TIMESTAMP_ISO8601}\\]\\s*\\[%{WORD:log_level}\\s*\\]%{DATA:class_name}\\s*Memory\\s*usage:\\s*%{GREEDYDATA:syslog_message}",
+"%{INT:process_id}\\s*- -\\s*%{WORD}\\s*\\[%{INT:event_id}\\][\\d\\s\\WTZ]*[\\w.]*\\]\\s\\[%{WORD:log_level}\\]%{DATA}%{IP:src_ip}\\s(?<event_action>%{WORD}\\s*%{WORD})\\s*%{DATA}agent:\\s*%{GREEDYDATA:user_agent}\\).*",
+"\\[%{WORD}\\s*%{INT:process_thread_id}\\s*%{DATA}\\.%{WORD:log_level}%{DATA}path%{DATA}%{PATH:file_path},\\s*%{GREEDYDATA:syslog_message}",
+"\\[%{WORD}\\s*%{INT:process_thread_id}\\s*%{DATA}\\.%{WORD:log_level}%{DATA}\\s%{GREEDYDATA:syslog_message}",
+"%{GREEDYDATA:syslog_message}"
+###vmware-hci###
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{IPORHOST:client_ip} %{IPORHOST:server_ip} - - \\[%{HTTPDATE:log_timestamp}\\] \\\"%{WORD:http_method} %{URIPATH:http_request} HTTP/%{NUMBER:http_version}\\\" %{INT:http_status} - %{NUMBER:response_bytes} %{NUMBER:response_duration} %{DATA:tomcat_instance}%{GREEDYDATA:tomcat_instance_name}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:log_timestamp} vcenter %{NOTSPACE:service} [\\s*%{NOTSPACE}].%{NOTSPACE} %{NOTSPACE} %{TIMESTAMP_ISO8601:log_message_timestamp} \\[%{DATA:thread}\\] %{WORD:log_level} opId=%{DATA:op_id} %{GREEDYDATA:class} - %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - \\[%{HTTPDATE:log_timestamp}\\] %{IPORHOST:client_ip} %{INT:pid} %{NOTSPACE:thread_name} %{INT:http_status} \\\"%{GREEDYDATA:user_agent}\\\" %{WORD:http_method} %{URIPATHPARAM:http_path} HTTP/%{NUMBER:http_version}.*",
+"<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{WORD:hostname}\\(%{DATA:facility}\\) %{DATA:log_level}-%{DATA:log_action}: ARP Entry %{IP:source_ip} %{GREEDYDATA:arp_action} %{GREEDYDATA:destinaton_ip}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - \\[%{HTTPDATE:log_timestamp}\\] %{NOTSPACE:tomcat_instance} \\[%{NOTSPACE:thread}\\] %{IPORHOST:client_ip}:%{INT:client_port} to %{WORD:destination} %{INT:destination_port} - HTTP/%{NUMBER:http_version} %{WORD:http_method} %{URIPATHPARAM:http_path} \\[Response\\] %{INT:response_code} - %{NUMBER:response_bytes} bytes \\[Perf\\] process %{INT:process_time}ms / commit %{INT:commit_time}ms / conn \\[%{GREEDYDATA:conn_info}\\].*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[Originator@%{INT:originator_sub}\\s+sub=%{DATA:originator_sub_type}\\] \\[Unit test\\] %{GREEDYDATA:msg_info} %{GREEDYDATA:count}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{IPORHOST:client_ip} %{IPORHOST:server_ip} - - \\[%{HTTPDATE:log_timestamp}\\] \\[%{NOTSPACE:tomcat_instance}\\] \\\"%{WORD:http_method} %{URIPATH:http_request} HTTP/%{NUMBER:http_version}\\\" %{INT:http_status} %{NUMBER:response_bytes} \\[%{GREEDYDATA:processing_time}\\] \\\"%{DATA:user_agent}\\\"",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - \\[%{TIMESTAMP_ISO8601:log_timestamp},%{INT:log_timestamp_ms}\\] %{DATA:log_level}%{INT:log_code}\\[%{DATA:thread}\\] - %{DATA:class}\\.%{DATA:method}\\(%{DATA:file}:%{INT:line}\\)? - %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{SYSLOGTIMESTAMP:log_timestamp} %{WORD:program}\\[%{INT:pid}\\]: cached %{HOSTNAME:cached_hostname} is %{IP:cached_ip}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{DATA:user} %{INT:pid} %{NUMBER:cpu} %{NUMBER:mem} %{NUMBER:mem_resident} %{DATA:status} %{DATA:start_time} %{INT:time_spent} %{DATA:program}:%{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\[%{DATA:tomcat_instance}\\s+%{WORD:log_level}\\s+%{DATA:logger}\\s+opId=%{DATA:op_id}\\] SAML token for SubjectNameId \\[value=%{DATA:subject_name_id}, format=%{DATA:format}\\] successfully parsed from XML.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\[%{DATA:backup_id}\\] \\[%{DATA:backup_process}\\:PID-%{DATA:pid}\\] \\[%{NOTSPACE:backup_source_file}:%{DATA:backup_source_path}\\:%{INT:backup_source_line}\\] %{WORD:log_level}\\: %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{SYSLOGTIMESTAMP:log_timestamp} %{NOTSPACE:program}\\[%{INT:pid}\\]: %{WORD:query_type}\\[%{DATA:query_type_data}\\] %{NOTSPACE:query_domain} from %{IP:client_ip}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{DATA:user} %{INT:pid} %{NUMBER:cpu} %{NUMBER:mem} %{NUMBER:mem_resident} %{DATA:status} %{DATA:start_time} %{INT:time_spent} %{DATA:program}: %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{DATA:service}-%{DATA:subservice} - - - \\[%{DATA:date_time}\\] %{DATA:tomcat_instance} \\[%{DATA:request_type}\\] %{IP:client_ip}:%{INT:client_port} to %{DATA:destination} %{INT:destination_port} - %{DATA:http_protocol} %{WORD:http_method} %{DATA:http_path} \\[%{DATA:response_type}\\] %{INT:response_code} - %{INT:response_bytes} bytes \\[%{DATA:perf_type}\\] process %{INT:process_time}ms / commit %{INT:commit_time}ms / conn \\[%{GREEDYDATA:conn_info}\\].*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{DATA:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{DATA:source} \\[%{DATA:file_path}:%{INT:line_number}\\] \\[opID=%{DATA:op_id}\\] %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} vpxd\\[%{INT:pid}\\] %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[Originator@%{INT:originator_sub}\\s+sub=%{DATA:originator_sub_type}\\] \\[Unit test\\] %{GREEDYDATA:msg_info} %{GREEDYDATA:count}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{IPORHOST:client_ip} %{IPORHOST:server_ip} - - \\[%{HTTPDATE:log_timestamp}\\] \\[%{NOTSPACE:tomcat_instance}\\] \\\"%{WORD:http_method} %{URIPATH:http_request} HTTP/%{NUMBER:http_version}\\\" %{INT:http_status} %{NUMBER:response_bytes} \\[%{GREEDYDATA:processing_time}\\] \\\"%{DATA:user_agent}\\\"",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - \\[%{TIMESTAMP_ISO8601:log_timestamp},%{INT:log_timestamp_ms}\\] %{DATA:log_level}%{INT:log_code}\\[%{DATA:thread}\\] - %{DATA:class}\\.%{DATA:method}\\(%{DATA:file}:%{INT:line}\\)? - %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{SYSLOGTIMESTAMP:log_timestamp} %{WORD:program}\\[%{INT:pid}\\]: cached %{HOSTNAME:cached_hostname} is %{IP:cached_ip}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{DATA:user} %{INT:pid} %{NUMBER:cpu} %{NUMBER:mem} %{NUMBER:mem_resident} %{DATA:status} %{DATA:start_time} %{INT:time_spent} %{DATA:program}:%{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\[%{DATA:tomcat_instance}\\s+%{WORD:log_level}\\s+%{DATA:logger}\\s+opId=%{DATA:op_id}\\] SAML token for SubjectNameId \\[value=%{DATA:subject_name_id}, format=%{DATA:format}\\] successfully parsed from XML.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\[%{DATA:backup_id}\\] \\[%{DATA:backup_process}\\:PID-%{DATA:pid}\\] \\[%{NOTSPACE:backup_source_file}:%{DATA:backup_source_path}\\:%{INT:backup_source_line}\\] %{WORD:log_level}\\: %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{SYSLOGTIMESTAMP:log_timestamp} %{NOTSPACE:program}\\[%{INT:pid}\\]: %{WORD:query_type}\\[%{DATA:query_type_data}\\] %{NOTSPACE:query_domain} from %{IP:client_ip}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{DATA:service}-%{DATA:subservice} - - - \\[%{DATA:date_time}\\] %{DATA:tomcat_instance} \\[%{DATA:request_type}\\] %{IP:client_ip}:%{INT:client_port} to %{DATA:destination} %{INT:destination_port} - %{DATA:http_protocol} %{WORD:http_method} %{DATA:http_path} \\[%{DATA:response_type}\\] %{INT:response_code} - %{INT:response_bytes} bytes \\[%{DATA:perf_type}\\] process %{INT:process_time}ms / commit %{INT:commit_time}ms / conn \\[%{GREEDYDATA:conn_info}\\].*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{DATA:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{DATA:source} \\[%{DATA:file_path}:%{INT:line_number}\\] \\[opID=%{DATA:op_id}\\] %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} vpxd\\[%{INT:pid}\\] \\[Originator@%{INT:originator_sub}\\s+sub=%{WORD:originator_sub_type}\\s+opID=%{DATA:op_id}\\] \\[VpxLRO\\] -- BEGIN %{DATA:lro} -- %{DATA:domain} -- %{DATA:action} -- %{UUID:request_id}\\(%{UUID:session_id}\\).*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[Originator@%{INT:originator_sub}\\s+sub=%{DATA:originator_sub_type}\\s+opID=%{DATA:op_id}\\] %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[%{DATA:component}\\s*::%{DATA:sub_component}\\s*opID=%{DATA:op_id}\\] %{GREEDYDATA:msg_info}%{SPACE}%{WORD:key}:%{SPACE}%{GREEDYDATA:value}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[%{DATA:component}@%{INT:component_id}\\s+sub=%{WORD:sub_type}\\s+opId=%{DATA:op_id}\\] %{GREEDYDATA:msg_info_start}(?: %{WORD:action} '%{NOTSPACE:action_name}%{DATA:action_target}' session '%{DATA:session_id}' active %{INT:active_status}| %{SPACE}%{WORD:key}:%{SPACE}%{GREEDYDATA:value}).*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} %{WORD:log_level} %{NOTSPACE:program}\\[%{INT:pid}\\] \\[Originator@%{INT:originator_sub}\\s+sub=%{WORD:originator_sub_type}\\] %{TIMESTAMP_ISO8601:access_timestamp} %{WORD:http_method} %{NOTSPACE:http_request} %{NOTSPACE:http_version} %{NOTSPACE:http_status} %{WORD:http_upstream} - %{NUMBER:bytes_sent} %{NUMBER:bytes_received} %{NUMBER:request_duration} %{NUMBER:response_duration} %{NUMBER:upstream_duration} %{IP:client_ip}:%{NUMBER:client_port} %{IP:server_ip}:%{NUMBER:server_port} %{IP:upstream_server_ip}:%{NUMBER:upstream_server_port} %{IP:downstream_server_ip}:%{GREEDYDATA:downstream_server_port}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:log_timestamp} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_message_timestamp} \\[%{DATA:thread}\\] %{WORD:log_level} opId=%{DATA:op_id} %{GREEDYDATA:class} - %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:log_timestamp} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_message_timestamp} \\[%{DATA:thread}\\] %{WORD:log_level} opId=%{DATA:op_id} %{GREEDYDATA:class} - %{GREEDYDATA:msg_info_start} %{WORD:key}:%{SPACE}%{GREEDYDATA:value}.*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{DATA:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\| %{WORD:log_level} \\| %{DATA:logger} \\| %{DATA:class} \\| %{INT:line_number} \\| %{GREEDYDATA:msg_info_start} %{WORD:key}:%{SPACE}%{DATA:id}ClusterVMAgency\\(ID:'%{DATA:cluster_vm_agency_id}:(?<cluster_vm_agency_uuid>[^:]+):(?<cluster_vm_agency_null>[^']+)'\\)\\.queryConfig\\[opId=%{INT:op_id}, sessionId=%{DATA:sessionId}\\]\\..*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{TIMESTAMP_ISO8601:log_timestamp} \\| %{WORD:log_level} \\| %{NOTSPACE:logger} \\| %{NOTSPACE:class} \\| %{INT:line} \\| %{GREEDYDATA:msg_info}.*",
+"<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{HOSTNAME:host} (\\w*): %{LOGLEVEL:log_level} %{WORD:process_name}\\[%{INT:pid}\\]\\s\\[%{DATA:kvfield}\\] Launching binary: %{DATA:process_executable} %{GREEDYDATA:process_args}.*",
+"<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{HOSTNAME:host} (\\w*): %{LOGLEVEL:log_level} %{WORD:process_name}\\[%{INT:pid}\\]\\s\\[%{DATA:kvfield}\\]%{GREEDYDATA:msg}.*",
+"<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{HOSTNAME:host} (\\w*): \\w* %{WORD:process_name}\\[%{INT:pid}\\]\\s\\[%{DATA:kvfield}\\]%{GREEDYDATA:msg}.*",
+"<%{POSINT:syslog_pri}>%{TIMESTAMP_ISO8601:event_created} %{HOSTNAME:host} %{WORD:process_name}\\[%{INT:pid}\\]\\: \\[%{DATA:kvfield}\\].*",
+"<%{POSINT:syslog_pri}>%{POSINT:syslog_ver} %{TIMESTAMP_ISO8601:event_created} vcenter %{NOTSPACE:service} - - - %{GREEDYDATA:msg_info}.*"
+"%{GREEDYDATA} returned HTTP failure; <SSL\\(%{DATA:ssl_info}\\), /%{DATA:service}>, method: %{DATA:method}; code: %{NUMBER:status_code}\\(%{DATA:http_status}\\)",
+"ERROR opId=%{DATA:op_id} %{DATA:class} - Error: %{GREEDYDATA:error_message} occurred as provider: %{URI:provider_url} is %{GREEDYDATA:state}",
+"Total number of changes for sync-id: %{DATA:sync_id} is: %{INT:change_count}",
+"\\[VpxLRO\\] -- FINISH session\\[%{UUID:session_id}\\]%{UUID:other_id}",
+"No notifications\\. seqNum: %{INT:sequence_number}, Current seqNum: %{INT:current_sequence_number}",
+"\\[VpxLRO\\] -- %{WORD:lro_state} %{DATA:lro_id} -- -- %{DATA:lro_name} --",
+"\\[VpxLRO\\] -- %{WORD:lro_state} %{GREEDYDATA:lro_id}",
+"Plugin period value: %{NUMBER:plugin_period_value} Projected period value: %{NUMBER:projected_period_value}",
+"%{GREEDYDATA:executor_status}: %{WORD:executor_in_progress} %{GREEDYDATA:offload_status}: %{WORD:eligible_for_offload}",
+"%{WORD:action} %{WORD:method} with datastore=%{DATA:datastore} fullSync=%{WORD:full_sync} changed size: %{INT:size} tidyVClock=%{INT:tidy_vclock} serverLastVClock=%{INT:server_last_vclock}",
+"%{GREEDYDATA}"

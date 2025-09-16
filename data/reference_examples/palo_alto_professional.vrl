@@ -1,0 +1,28 @@
+#######################################################
+## Professional Palo Alto PAN-OS Traffic Log Parser (VRL)
+#######################################################
+
+.event.kind = "event"
+.event.category = ["network", "security"]
+.observer.vendor = "palo_alto_networks"
+.observer.product = "pan-os"
+.observer.type = "firewall"
+.event.dataset = "panw.traffic"
+
+if exists(.message) && is_string(.message) {
+  .event.original = del(.message)
+}
+
+kvs = parse_key_value(.event.original, field_delimiter: ",", key_value_delimiter: "=")
+if is_object(kvs) { .event_data = merge(.event_data, kvs, deep: true) }
+
+if exists(.event_data.src) { .source.ip = del(.event_data.src) }
+if exists(.event_data.dst) { .destination.ip = del(.event_data.dst) }
+if exists(.event_data.sport) { .source.port = to_int!(del(.event_data.sport)) }
+if exists(.event_data.dport) { .destination.port = to_int!(del(.event_data.dport)) }
+if exists(.event_data.app) { .network.application = del(.event_data.app) }
+if exists(.event_data.action) { .event.action = del(.event_data.action) }
+
+.related.ip = unique(compact([.source.ip, .destination.ip]))
+. = compact(., string: true, array: true, object: true, null: true)
+

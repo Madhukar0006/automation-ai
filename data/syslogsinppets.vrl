@@ -1,0 +1,61 @@
+# Syslog-specific VRL snippets
+# This file contains VRL code snippets specifically for syslog parsing
+
+# Parse syslog priority into facility and severity
+if exists(.log.syslog.priority) {
+    priority = to_int!(.log.syslog.priority)
+    .log.syslog.facility = floor(priority / 8)
+    .log.syslog.severity = mod(priority, 8)
+}
+
+# Parse syslog timestamp
+if exists(.log.syslog.timestamp) {
+    .@timestamp = parse_timestamp!(.log.syslog.timestamp, "%Y-%m-%dT%H:%M:%S%.3fZ")
+}
+
+# Map syslog fields to ECS
+if exists(.log.syslog.hostname) {
+    .host.name = del(.log.syslog.hostname)
+}
+
+if exists(.log.syslog.appname) {
+    .process.name = del(.log.syslog.appname)
+}
+
+if exists(.log.syslog.severity) {
+    .log.level = del(.log.syslog.severity)
+}
+
+if exists(.log.syslog.message) {
+    .message = del(.log.syslog.message)
+}
+
+# Set event category based on syslog facility
+if exists(.log.syslog.facility) {
+    facility = to_int!(.log.syslog.facility)
+    if facility == 0 { .event.category = ["system"] }
+    else if facility == 1 { .event.category = ["user"] }
+    else if facility == 2 { .event.category = ["mail"] }
+    else if facility == 3 { .event.category = ["system"] }
+    else if facility == 4 { .event.category = ["security"] }
+    else if facility == 5 { .event.category = ["system"] }
+    else if facility == 6 { .event.category = ["system"] }
+    else if facility == 7 { .event.category = ["system"] }
+    else if facility == 8 { .event.category = ["user"] }
+    else if facility == 9 { .event.category = ["system"] }
+    else if facility == 10 { .event.category = ["security"] }
+    else if facility == 11 { .event.category = ["system"] }
+    else if facility == 12 { .event.category = ["system"] }
+    else if facility == 13 { .event.category = ["system"] }
+    else if facility == 14 { .event.category = ["system"] }
+    else if facility == 15 { .event.category = ["system"] }
+    else if facility == 16 { .event.category = ["system"] }
+    else if facility == 17 { .event.category = ["system"] }
+    else if facility == 18 { .event.category = ["system"] }
+    else if facility == 19 { .event.category = ["system"] }
+    else if facility == 20 { .event.category = ["system"] }
+    else if facility == 21 { .event.category = ["system"] }
+    else if facility == 22 { .event.category = ["system"] }
+    else if facility == 23 { .event.category = ["system"] }
+    else { .event.category = ["system"] }
+}

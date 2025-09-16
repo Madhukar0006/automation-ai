@@ -1,0 +1,3 @@
+<166>1 2023-10-26T10:30:00.123Z ASA-firewall %ASA-6-302013: Built outbound TCP connection 12345 for outside:192.0.2.10/80 (192.0.2.10/80) to inside:10.0.1.25/12345 (10.0.1.25/12345)
+<166>1 2023-10-26T10:31:01.456Z ASA-firewall %ASA-4-106023: Deny tcp src outside:198.51.100.10/54321 dst inside:10.0.2.100/443 by access-group "acl_outside" [0x0, 0x0]
+<166>1 2023-10-26T10:32:05.789Z ASA-firewall %ASA-6-302014: Teardown TCP connection 12346 for outside:203.0.113.55/443 to inside:10.0.3.30/56789 duration 0:00:30 bytes 1500 TCP FINs

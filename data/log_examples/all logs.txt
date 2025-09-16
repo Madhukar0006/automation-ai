@@ -1,0 +1,83 @@
+Apache Access Log (Common Log Format):
+192.168.2.20 - - [28/Jul/2006:10:27:10 -0300] "GET /cgi-bin/try/ HTTP/1.0" 200 3395
+127.0.0.1 - - [28/Jul/2006:10:22:04 -0300] "GET / HTTP/1.0" 200 2216
+127.0.0.1 - - [28/Jul/2006:10:27:32 -0300] "GET /hidden/ HTTP/1.0" 404 7218
+
+Apache Access Log (Combined Log Format):
+127.0.0.1 bob frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://www.seniorinfomediaries.com/vertical/channels/front-end/bandwidth" "Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/1945-10-12 Firefox/37.0"
+
+Apache Error Log (Standard):
+[Fri Dec 16 01:46:23 2005] [error] [client 1.2.3.4] Directory index forbidden by rule: /home/test/
+[Fri Dec 16 01:54:34 2005] [error] [client 1.2.3.4] Directory index forbidden by rule: /apache/web-data/test2
+[Fri Dec 16 02:25:55 2005] [error] [client 1.2.3.4] Client sent malformed Host header
+[Mon Dec 19 23:02:01 2005] [error] [client 1.2.3.4] user test: authentication failure for "/~dcid/test1": Password Mismatc
+[01/Mar/2021:12:00:19 +0000] [ab:alert] [pid 4803:tid 3814] [client 147.159.108.175:24259] I will bypass the haptic COM bandwidth, that should matrix the CSS driver!
+
+Apache Error Log (Startup/Shutdown):
+[Sat Aug 12 04:05:51 2006] [notice] Apache/1.3.11 (Unix) mod_perl/1.21 configured -- resuming normal operations
+[Thu Jun 22 14:20:55 2006] [notice] Digest: generating secret for digest authentication ...
+[Thu Jun 22 14:20:55 2006] [notice] Digest: done
+[Thu Jun 22 14:20:55 2006] [notice] Apache/2.0.46 (Red Hat) DAV/2 configured -- resuming normal operations
+[Sat Aug 12 04:05:49 2006] [notice] SIGHUP received.  Attempting to restart
+[Sat Aug 12 04:05:51 2006] [notice] suEXEC mechanism enabled (wrapper: /usr/local/apache/sbin/suexec)
+[Sat Jun 24 09:06:22 2006] [warn] pid file /opt/CA/BrightStorARCserve/httpd/logs/httpd.pid overwritten -- Unclean shutdown of previous Apache run?
+[Thu Jun 22 11:35:48 2006] [notice] caught SIGTERM, shutting down
+
+Apache Error Log (Resource Issues):
+[Tue Mar 08 10:34:21 2005] [error] (11)Resource temporarily unavailable: fork: Unable to fork new process
+[Tue Mar 08 10:34:31 2005] [error] (11)Resource temporarily unavailable: fork: Unable to fork new process
+
+Apache Error Log (SVN/PROPFIND):
+x.x.x.90 - - [13/Sep/2006:07:01:53 -0700] "PROPFIND /svn/[xxxx]/Extranet/branches/SOW-101 HTTP/1.1" 401 587
+x.x.x.90 - - [13/Sep/2006:07:01:51 -0700] "PROPFIND /svn/[xxxx]/[xxxx]/trunk HTTP/1.1" 401 587
+
+AWS ALB Access Log:
+http 2018-11-30T22:23:00.186641Z app/my-loadbalancer/50dc6c495c0c9188 192.168.131.39:2817 - 0.000 0.001 0.000 200 200 34 366 "GET http://www.example.com:80/ HTTP/1.1" "curl/7.46.0" - - arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067 "Root=1-58337364-23a8c76965a2ef7629b185e3" "-" "-" 0 2018-11-30T22:22:48.364000Z "forward" "-" "-" "-" "-" "-"
+
+AWS CloudWatch Logs Subscription:
+.message
+
+AWS VPC Flow Log:
+2 123456789010 eni-1235b8ca123456789 - - - - - - - 1431280876 1431280934 - NODATA
+
+Byte Format Parsing:
+1024KiB
+
+CBOR:
+oWVmaWVsZGV2YWx1ZQ==
+
+CEF (Common Event Format):
+CEF:0|CyberArk|PTA|12.6|1|Suspected credentials theft|8|suser=mike2@prod1.domain.com shost=prod1.domain.com src=1.1.1.1 duser=andy@dev1.domain.com dhost=dev1.domain.com dst=2.2.2.2 cs1Label=ExtraData cs1=None cs2Label=EventID cs2=52b06812ec3500ed864c461e deviceCustomDate1Label=detectionDate deviceCustomDate1=1388577900000 cs3Label=PTAlink cs3=https://1.1.1.1/incidents/52b06812ec3500ed864c461e cs4Label=ExternalLink cs4=None
+
+Common Log Format (CLF):
+127.0.0.1 bob frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
+
+CSV:
+foo,bar,"foo "", bar"
+
+JSON:
+{"key": "val"}
+
+Key-Value (logfmt style):
+@timestamp="Sun Jan 10 16:47:39 EST 2021" level=info msg="Stopping all fetchers" tag#production=stopping_fetchers id=ConsumerFetcherManager-1382721708341 module=kafka.consumer.ConsumerFetcherManager
+
+Linux Authorization Log:
+Mar 23 01:49:58 localhost sshd[1111]: Accepted publickey for eng from 10.1.1.1 port 8888 ssh2: RSA SHA256:foobar
+
+Regex:
+first group and second group.
+Pattern: (?P<number>.*?) group
+
+Regex All:
+first group and second group.
+Pattern: (?P<number>\w+) group
+numeric_groups: true
+
+URL:
+ftp://foo:bar@example.com:4343/foobar?hello=world#123
+
+User Agent:
+Mozilla Firefox 1.0.1 Mozilla/5.0 (X11; U; Linux i686; de-DE; rv:1.7.6) Gecko/20050223 Firefox/1.0.1
+
+Syslog:
+<13>1 2020-03-13T20:45:38.119Z dynamicwireless.name non 2426 ID931 [exampleSDID@32473 iut="3" eventSource= "Application" eventID="1011"] Try to override the THX port, maybe it will reboot the neural interface!
