@@ -117,6 +117,7 @@ Thumbs.db
 
 # Vector/Chroma databases
 chroma_db/
+ecs_rag_database/
 *.sqlite3
 *.db
 
@@ -147,8 +148,16 @@ vector_output*/
 models/*.bin
 models/*.safetensors
 models/*.onnx
+models/*.pt
+models/*.pth
 
-# Keep essential model config files
+# Keep essential model config files only
 !models/all-MiniLM-L6-v2/config.json
 !models/all-MiniLM-L6-v2/modules.json
 !models/all-MiniLM-L6-v2/README.md
+!models/all-MiniLM-L6-v2/config_sentence_transformers.json
+!models/all-MiniLM-L6-v2/sentence_bert_config.json
+!models/all-MiniLM-L6-v2/special_tokens_map.json
+!models/all-MiniLM-L6-v2/tokenizer_config.json
+!models/all-MiniLM-L6-v2/tokenizer.json
+!models/all-MiniLM-L6-v2/vocab.txt
