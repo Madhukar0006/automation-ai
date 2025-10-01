@@ -238,13 +238,13 @@ Be thorough and ensure generated parsers follow best practices."""),
     def _generate_simple_vrl(self, log_content: str, log_format: str) -> Dict[str, Any]:
         """Generate comprehensive VRL code that extracts ALL fields like human experts"""
         try:
-            # Use CLEAN GROK-based VRL templates that eliminate nested duplication
+            # Use ENHANCED GROK-based VRL templates that eliminate duplication and extract ALL fields
             if log_format == "json":
-                from clean_grok_parser import generate_clean_grok_json_vrl
-                vrl_code = generate_clean_grok_json_vrl()
+                from enhanced_grok_parser import generate_enhanced_grok_json_vrl
+                vrl_code = generate_enhanced_grok_json_vrl()
             elif log_format == "syslog":
-                from clean_grok_parser import generate_clean_grok_syslog_vrl
-                vrl_code = generate_clean_grok_syslog_vrl()
+                from enhanced_grok_parser import generate_enhanced_grok_syslog_vrl
+                vrl_code = generate_enhanced_grok_syslog_vrl()
             else:
                 vrl_code = """
 # Clean GROK-Based Generic Log Parser - No Duplication, No Nesting
