@@ -138,18 +138,57 @@ class CompleteRAGSystem:
             if not documents:
                 logger.warning("No documents loaded from data/ for indexing (allowed: .vrl,.txt,.md,.json,.csv)")
 
-            # 2) Split
-            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
-            chunks = splitter.split_documents(documents)
-            logger.info(f"Prepared {len(chunks)} chunks for embedding")
+            # 2) Split - Smart chunks that understand line-by-line content
+            chunks = []
+            for doc in documents:
+                lines = doc.page_content.split('\n')
+                current_chunk_lines = []
+                current_chunk_start = 0
+                
+                for i, line in enumerate(lines):
+                    line = line.strip()
+                    if not line:  # Skip empty lines
+                        continue
+                    
+                    current_chunk_lines.append(line)
+                    
+                    # Create chunk when we have 3-5 lines or reach end of file
+                    if len(current_chunk_lines) >= 3 or i == len(lines) - 1:
+                        if current_chunk_lines:  # Only create chunk if we have content
+                            chunk_content = '\n'.join(current_chunk_lines)
+                            chunks.append(Document(
+                                page_content=chunk_content,
+                                metadata={
+                                    **doc.metadata, 
+                                    "start_line": current_chunk_start + 1,
+                                    "end_line": current_chunk_start + len(current_chunk_lines),
+                                    "line_count": len(current_chunk_lines),
+                                    "chunk_type": "smart_line_grouping"
+                                }
+                            ))
+                            current_chunk_start = i + 1
+                            current_chunk_lines = []
+            
+            # Process ALL chunks - no limiting for complete coverage
+            logger.info(f"Processing ALL {len(chunks)} chunks for complete knowledge base coverage")
+            
+            logger.info(f"Prepared {len(chunks)} line-by-line chunks for embedding")
 
             # 3) Embed (local, free)
             embeddings = HuggingFaceEmbeddings(model_name=self.embedding_model_name, 
                                                encode_kwargs={"normalize_embeddings": True})
 
             # 4) Store using direct ChromaDB client (avoid LangChain Chroma conflicts)
-            # Generate embeddings manually
-            embeddings_list = embeddings.embed_documents([chunk.page_content for chunk in chunks])
+            # Generate embeddings in batches to avoid memory issues
+            batch_size = 1000  # Larger batch size for efficiency with all content
+            embeddings_list = []
+            
+            for i in range(0, len(chunks), batch_size):
+                batch_chunks = chunks[i:i + batch_size]
+                batch_texts = [chunk.page_content for chunk in batch_chunks]
+                batch_embeddings = embeddings.embed_documents(batch_texts)
+                embeddings_list.extend(batch_embeddings)
+                logger.info(f"Processed embedding batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
             
             # Add to existing ChromaDB collection
             if not self.chroma_client:
@@ -327,6 +366,10 @@ class CompleteRAGSystem:
         # Load log samples from data folder
         log_samples = self._load_log_samples()
         entries.extend(log_samples)
+
+        # Load source list mappings (observer.type/vendor/product/log_type)
+        source_mappings = self._load_source_list_mappings()
+        entries.extend(source_mappings)
         
         # Add ECS fields
         ecs_fields = self._get_ecs_fields()
@@ -398,6 +441,84 @@ class CompleteRAGSystem:
             except Exception as e:
                 logger.warning(f"Could not load snippets.jsonl: {e}")
         
+        return entries
+
+    def _load_source_list_mappings(self) -> List[Dict[str, Any]]:
+        """Load observer/log source mappings from data/sourcelist.json and convert to RAG entries.
+
+        Expected keys (best-effort, flexible):
+          - observer.type (or 'log.type' / 'type')
+          - observer.vendor (or 'lvendor' / 'vendor')
+          - observer.product (or 'product')
+          - log_type (or 'log.type')
+          - category (optional)
+          - log_source (optional)
+        """
+        entries: List[Dict[str, Any]] = []
+        path = os.path.join(self.data_directory, "sourcelist.json")
+        if not os.path.exists(path):
+            return entries
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Normalize to list of dicts
+            rows: List[Dict[str, Any]]
+            if isinstance(data, list):
+                rows = data
+            elif isinstance(data, dict):
+                # If dict, try to interpret values as rows
+                rows = data.get("rows") or data.get("items") or []
+                if not isinstance(rows, list):
+                    # Fallback: treat top-level dict as single row
+                    rows = [data]
+            else:
+                rows = []
+
+            for idx, row in enumerate(rows):
+                # Flexible key accessors
+                def _get(*keys: str) -> Any:
+                    for k in keys:
+                        if k in row and row[k] not in (None, "", []):
+                            return row[k]
+                    return None
+
+                observer_type = _get("observer.type", "log.type", "type")
+                vendor = _get("observer.vendor", "lvendor", "vendor")
+                product = _get("observer.product", "product")
+                log_type = _get("log_type", "log.type")
+                log_source = _get("log_source", "source", "observer.product")
+                category = _get("category", "event.category")
+
+                # Build content string for embedding
+                content_parts = [
+                    f"Category: {category or 'unknown'}",
+                    f"observer.type: {observer_type or 'unknown'}",
+                    f"observer.vendor: {vendor or 'unknown'}",
+                    f"observer.product: {product or 'unknown'}",
+                    f"log_type: {log_type or 'unknown'}",
+                    f"log_source: {log_source or 'unknown'}",
+                ]
+                content = " | ".join(content_parts)
+
+                entries.append({
+                    "content": f"Source Mapping: {content}",
+                    "metadata": {
+                        "type": "source_mapping",
+                        "category": (category or "classification"),
+                        "observer_type": observer_type or "unknown",
+                        "vendor": vendor or "unknown",
+                        "product": product or "unknown",
+                        "log_type": log_type or "unknown",
+                        "log_source": log_source or "unknown",
+                        "file": "sourcelist.json",
+                    }
+                })
+
+        except Exception as e:
+            logger.warning(f"Could not load sourcelist.json: {e}")
+
         return entries
     
     def _extract_ecs_fields_from_vrl(self, vrl_content: str) -> List[str]:
@@ -794,6 +915,39 @@ class CompleteRAGSystem:
             'knowledge_base_size': self.collection.count() if self.collection else 0
         }
         return status
+    
+    def search(self, query: str, k: int = 5) -> List[Dict[str, Any]]:
+        """General search method for the RAG system"""
+        try:
+            if not self.embedding_model or not self.collection:
+                logger.warning("RAG system not properly initialized")
+                return []
+            
+            # Generate query embedding
+            query_embedding = self.embedding_model.encode([query])
+            
+            # Search the collection
+            results = self.collection.query(
+                query_embeddings=query_embedding.tolist(),
+                n_results=k,
+                include=['documents', 'metadatas', 'distances']
+            )
+            
+            # Format results
+            formatted_results = []
+            if results['documents'] and results['documents'][0]:
+                for i, doc in enumerate(results['documents'][0]):
+                    formatted_results.append({
+                        'page_content': doc,
+                        'metadata': results['metadatas'][0][i] if results['metadatas'] and results['metadatas'][0] else {},
+                        'distance': results['distances'][0][i] if results['distances'] and results['distances'][0] else 0.0
+                    })
+            
+            return formatted_results
+            
+        except Exception as e:
+            logger.error(f"Search failed: {str(e)}")
+            return []
 
 
 # Streamlit integration

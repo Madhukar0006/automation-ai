@@ -1,3 +1,0 @@
-<134>1 2023-10-26T11:05:10.000Z CheckPoint-FW1 firewall: [fw_0];
-<134>1 2023-10-26T11:06:22.123Z CheckPoint-FW1 security-gateway: [action:"Accept"; conn_direction:"Outgoing"; src:"10.10.10.5"; dst:"8.8.8.8"; proto:"udp"; service:"53";]
-<134>1 2023-10-26T11:07:35.456Z CheckPoint-FW1 security-gateway: [action:"Drop"; reason:"policy"; src:"192.168.1.100"; dst:"10.20.30.40"; proto:"tcp"; service:"80";]

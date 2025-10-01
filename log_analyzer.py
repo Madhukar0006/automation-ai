@@ -84,6 +84,14 @@ def identify_log_type(line):
         
         # If no vendor signature, it's generic syslog
         return "syslog"
+    
+    # 3b. Check for Cisco ASA logs without syslog header (common format)
+    if re.search(r'%ASA-\d+-\d+:', line):
+        return "syslog"
+    
+    # 3c. Check for other vendor logs without syslog header
+    if re.search(r'%[A-Z]+-\d+-\d+:', line):
+        return "syslog"
         
     # 4. Check for web server formats.
     if re.match(CLF_REGEX, line):

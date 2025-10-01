@@ -1,0 +1,237 @@
+{
+  "log_classification": {
+    "vendors": {
+      "cisco": {
+        "name": "Cisco Systems",
+        "products": {
+          "wlc": {
+            "name": "Wireless LAN Controller",
+            "type": "firewall",
+            "patterns": ["WLC", "WLC-PRI", "WLC-SEC", "%APF-", "%AAA-", "apfMsConnTask", "radiusTransportThread", "ewmwebWebauth"],
+            "log_sources": ["WLC-PRI", "WLC-SEC", "apfMsConnTask_1", "radiusTransportThread", "ewmwebWebauth1", "emWeb"],
+            "log_formats": ["syslog"]
+          },
+          "asa": {
+            "name": "Adaptive Security Appliance",
+            "type": "firewall",
+            "patterns": ["ASA", "%ASA-", "Cisco ASA", "Adaptive Security Appliance"],
+            "log_sources": ["ASA", "firewall", "security"],
+            "log_formats": ["syslog", "cef"]
+          },
+          "ios": {
+            "name": "Internetwork Operating System",
+            "type": "router",
+            "patterns": ["IOS", "%IOS-", "Cisco IOS", "router", "switch"],
+            "log_sources": ["router", "switch", "ios"],
+            "log_formats": ["syslog"]
+          },
+          "meraki": {
+            "name": "Cisco Meraki",
+            "type": "firewall",
+            "patterns": ["Meraki", "MR", "MX", "MS", "MV"],
+            "log_sources": ["meraki", "dashboard"],
+            "log_formats": ["json", "syslog"]
+          }
+        }
+      },
+      "fortinet": {
+        "name": "Fortinet",
+        "products": {
+          "fortigate": {
+            "name": "FortiGate",
+            "type": "firewall",
+            "patterns": ["FortiGate", "Fortinet", "fortigate", "FG", "%FG-"],
+            "log_sources": ["fortigate", "firewall", "security"],
+            "log_formats": ["syslog", "cef", "json"]
+          },
+          "fortimanager": {
+            "name": "FortiManager",
+            "type": "management",
+            "patterns": ["FortiManager", "FM", "%FM-"],
+            "log_sources": ["fortimanager", "management"],
+            "log_formats": ["syslog", "json"]
+          }
+        }
+      },
+      "palo_alto": {
+        "name": "Palo Alto Networks",
+        "products": {
+          "panos": {
+            "name": "PAN-OS",
+            "type": "firewall",
+            "patterns": ["PAN-OS", "Palo Alto", "PAN-", "PA-", "paloalto"],
+            "log_sources": ["panos", "firewall", "security"],
+            "log_formats": ["syslog", "json"]
+          },
+          "cortex": {
+            "name": "Cortex XDR",
+            "type": "security",
+            "patterns": ["Cortex", "XDR", "Traps"],
+            "log_sources": ["cortex", "xdr", "traps"],
+            "log_formats": ["json", "syslog"]
+          }
+        }
+      },
+      "checkpoint": {
+        "name": "Check Point",
+        "products": {
+          "gaia": {
+            "name": "GAIA OS",
+            "type": "firewall",
+            "patterns": ["Check Point", "CP-", "GAIA", "SmartConsole"],
+            "log_sources": ["checkpoint", "firewall", "security"],
+            "log_formats": ["syslog", "cef"]
+          },
+          "r80": {
+            "name": "R80 Management",
+            "type": "management",
+            "patterns": ["R80", "SmartConsole", "Management"],
+            "log_sources": ["management", "smartconsole"],
+            "log_formats": ["syslog", "json"]
+          }
+        }
+      },
+      "juniper": {
+        "name": "Juniper Networks",
+        "products": {
+          "junos": {
+            "name": "JUNOS",
+            "type": "router",
+            "patterns": ["JUNOS", "Juniper", "EX", "MX", "SRX"],
+            "log_sources": ["junos", "router", "switch"],
+            "log_formats": ["syslog"]
+          },
+          "srx": {
+            "name": "SRX Series",
+            "type": "firewall",
+            "patterns": ["SRX", "JSRX", "Security"],
+            "log_sources": ["srx", "firewall", "security"],
+            "log_formats": ["syslog"]
+          }
+        }
+      },
+      "microsoft": {
+        "name": "Microsoft",
+        "products": {
+          "iis": {
+            "name": "Internet Information Services",
+            "type": "webserver",
+            "patterns": ["IIS", "Microsoft-IIS", "W3SVC"],
+            "log_sources": ["iis", "webserver", "w3svc"],
+            "log_formats": ["clf", "json"]
+          },
+          "windows": {
+            "name": "Windows Event Log",
+            "type": "system",
+            "patterns": ["Windows", "EventLog", "Security", "System", "Application"],
+            "log_sources": ["windows", "eventlog", "security"],
+            "log_formats": ["json", "xml"]
+          },
+          "azure": {
+            "name": "Azure",
+            "type": "cloud",
+            "patterns": ["Azure", "Microsoft Azure", "ARM", "Resource Manager"],
+            "log_sources": ["azure", "cloud", "arm"],
+            "log_formats": ["json"]
+          }
+        }
+      },
+      "apache": {
+        "name": "Apache Software Foundation",
+        "products": {
+          "httpd": {
+            "name": "Apache HTTP Server",
+            "type": "webserver",
+            "patterns": ["Apache", "httpd", "Apache/"],
+            "log_sources": ["apache", "httpd", "webserver"],
+            "log_formats": ["clf", "json"]
+          }
+        }
+      },
+      "nginx": {
+        "name": "Nginx",
+        "products": {
+          "nginx": {
+            "name": "Nginx",
+            "type": "webserver",
+            "patterns": ["nginx", "Nginx/"],
+            "log_sources": ["nginx", "webserver"],
+            "log_formats": ["clf", "json"]
+          }
+        }
+      },
+      "aws": {
+        "name": "Amazon Web Services",
+        "products": {
+          "cloudtrail": {
+            "name": "CloudTrail",
+            "type": "cloud",
+            "patterns": ["CloudTrail", "AWS", "Amazon", "S3", "EC2", "Lambda"],
+            "log_sources": ["cloudtrail", "aws", "s3", "ec2"],
+            "log_formats": ["json"]
+          },
+          "vpc": {
+            "name": "VPC Flow Logs",
+            "type": "network",
+            "patterns": ["VPC", "Flow Logs", "ENI"],
+            "log_sources": ["vpc", "flowlogs", "eni"],
+            "log_formats": ["json"]
+          }
+        }
+      }
+    },
+    "log_formats": {
+      "syslog": {
+        "patterns": [
+          "^<\\d{1,3}>\\d",
+          "^<\\d{1,3}>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}",
+          "^\\d+\\s*<\\d{1,3}>\\d",
+          "^\\w{3}\\s+\\d{1,2}\\s\\d{2}:\\d{2}:\\d{2}\\s"
+        ],
+        "description": "Syslog format (RFC3164, RFC5424, RFC6587)"
+      },
+      "json": {
+        "patterns": [
+          "^\\s*\\{.*\\}\\s*$",
+          "^\\s*\\[.*\\]\\s*$"
+        ],
+        "description": "JSON format"
+      },
+      "cef": {
+        "patterns": [
+          "^CEF:",
+          "^CEF:\\d+\\|"
+        ],
+        "description": "Common Event Format"
+      },
+      "leef": {
+        "patterns": [
+          "^LEEF:",
+          "^LEEF:\\d+\\|"
+        ],
+        "description": "Log Event Extended Format"
+      },
+      "clf": {
+        "patterns": [
+          "^\\d+\\.\\d+\\.\\d+\\.\\d+\\s",
+          "^\\[\\d{2}/\\w{3}/\\d{4}:\\d{2}:\\d{2}:\\d{2}"
+        ],
+        "description": "Common Log Format"
+      }
+    },
+    "classification_rules": {
+      "priority_order": [
+        "vendor_patterns",
+        "product_patterns", 
+        "log_source_patterns",
+        "log_format_patterns"
+      ],
+      "confidence_levels": {
+        "high": "Multiple patterns match",
+        "medium": "Single pattern match",
+        "low": "Format only detected"
+      }
+    }
+  }
+}
+

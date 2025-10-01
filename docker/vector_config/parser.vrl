@@ -1,0 +1,15 @@
+
+# JSON Log Parser
+.event.kind = "event"
+.event.category = ["unknown"]
+.event.created = now()
+.message = .
+
+# Parse JSON - ensure string type
+.parsed = parse_json(string!(.))
+if is_object(.parsed) {
+    .event.type = ["info"]
+    .event.dataset = "json.logs"
+}
+
+.@timestamp = now()

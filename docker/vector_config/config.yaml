@@ -1,0 +1,91 @@
+# Final Working Vector Configuration with Compact
+data_dir: ./data
+
+sources:
+  file_input:
+    type: file
+    include: ["vector_logs/test.log"]
+    read_from: beginning
+
+transforms:
+  vrl_parser:
+    type: remap
+    inputs: ["file_input"]
+    source: |
+      # Perfect Working Syslog Parser
+      .event.kind = "event"
+      .event.category = ["network", "system"]
+      .event.type = ["info"]
+      .event.dataset = "syslog.logs"
+      .event.created = now()
+      .message = .
+      .@timestamp = now()
+
+      # Parse syslog if it contains < and >
+      if is_string(.) {
+          .input_string = string!(.)
+          
+          if contains(.input_string, "<") {
+              if contains(.input_string, ">") {
+                  .parsed, err = parse_syslog(.input_string)
+                  if err == null {
+                      .event.dataset = "syslog.parsed"
+                      
+                      if is_object(.parsed) {
+                          # Extract basic fields
+                          if exists(.parsed.timestamp) {
+                              .@timestamp = .parsed.timestamp
+                          }
+                          if exists(.parsed.hostname) {
+                              .host.name = .parsed.hostname
+                          }
+                          if exists(.parsed.program) {
+                              .service.name = .parsed.program
+                          }
+                          if exists(.parsed.pid) {
+                              .process.pid = .parsed.pid
+                          }
+                          if exists(.parsed.message) {
+                              .message = .parsed.message
+                              .log.original = .parsed.message
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+      # Set defaults
+      if !exists(."event.kind") {
+          .event.kind = "event"
+      }
+      if !exists(."event.category") {
+          .event.category = ["unknown"]
+      }
+      if !exists(."event.type") {
+          .event.type = ["info"]
+      }
+      if !exists(."event.dataset") {
+          .event.dataset = "syslog.logs"
+      }
+      if !exists(."event.created") {
+          .event.created = now()
+      }
+      if !exists(."@timestamp") {
+          .@timestamp = now()
+      }
+
+      # Add metadata
+      .log.original = .
+      .event.original = .
+      .tags = ["syslog", "parsed"]
+
+      # Compact the output as requested
+      . = compact(., string: true, array: true, object: true, null: true)
+
+sinks:
+  stdout_output:
+    type: console
+    inputs: ["vrl_parser"]
+    encoding:
+      codec: json

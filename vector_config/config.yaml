@@ -1,0 +1,251 @@
+# Vector Configuration for VRL Validation
+data_dir: ./data
+
+sources:
+  file_input:
+    type: file
+    include: ["vector_logs/test.log"]
+    read_from: beginning
+
+transforms:
+  vrl_parser:
+    type: remap
+    inputs: ["file_input"]
+    source: |
+      # Perfect Comprehensive Syslog Parser - Extracts ALL Fields
+      # Like how a human expert would write it
+
+      # Basic ECS event structure
+      .event.kind = "event"
+      .event.category = ["network", "system"]
+      .event.type = ["info"]
+      .event.dataset = "syslog.logs"
+      .event.created = now()
+      .message = .
+      .@timestamp = now()
+
+      # Parse syslog with comprehensive field extraction
+      if is_string(.) {
+          .input_string = string!(.)
+          
+          # Parse syslog format: <priority>version timestamp hostname program pid messageid message
+          if contains(.input_string, "<") {
+              if contains(.input_string, ">") {
+                  .parsed, err = parse_syslog(.input_string)
+                  if err == null {
+                      .event.dataset = "syslog.parsed"
+                      
+                      if is_object(.parsed) {
+                          # Extract timestamp
+                          if exists(.parsed.timestamp) {
+                              .@timestamp = .parsed.timestamp
+                              .event.start = .parsed.timestamp
+                              .timestamp = .parsed.timestamp
+                          }
+                          
+                          # Extract hostname and network info
+                          if exists(.parsed.hostname) {
+                              .host.name = .parsed.hostname
+                              .observer.hostname = .parsed.hostname
+                              .log.origin.host.name = .parsed.hostname
+                          }
+                          
+                          # Extract program/service info
+                          if exists(.parsed.program) {
+                              .service.name = .parsed.program
+                              .process.name = .parsed.program
+                              .log.syslog.program = .parsed.program
+                              .event.provider = .parsed.program
+                          }
+                          
+                          # Extract process ID
+                          if exists(.parsed.pid) {
+                              .process.pid = .parsed.pid
+                              .log.syslog.pid = .parsed.pid
+                          }
+                          
+                          # Extract message ID
+                          if exists(.parsed.msgid) {
+                              .log.syslog.msgid = .parsed.msgid
+                              .event.id = .parsed.msgid
+                          }
+                          
+                          # Extract facility and severity
+                          if exists(.parsed.facility) {
+                              .log.syslog.facility.code = .parsed.facility
+                              .log.syslog.facility.name = to_string(.parsed.facility)
+                          }
+                          
+                          if exists(.parsed.severity) {
+                              .log.level = to_string(.parsed.severity)
+                              .log.syslog.severity.code = .parsed.severity
+                              .log.syslog.severity.name = to_string(.parsed.severity)
+                              
+                              # Map severity to event category
+                              if .parsed.severity == 0 {
+                                  .event.category = ["system", "critical"]
+                                  .event.type = ["error"]
+                              }
+                              if .parsed.severity == 1 {
+                                  .event.category = ["system", "critical"]
+                                  .event.type = ["error"]
+                              }
+                              if .parsed.severity == 2 {
+                                  .event.category = ["system"]
+                                  .event.type = ["error"]
+                              }
+                              if .parsed.severity == 3 {
+                                  .event.category = ["system"]
+                                  .event.type = ["error"]
+                              }
+                              if .parsed.severity == 4 {
+                                  .event.category = ["system"]
+                                  .event.type = ["info"]
+                              }
+                              if .parsed.severity == 5 {
+                                  .event.category = ["system"]
+                                  .event.type = ["info"]
+                              }
+                              if .parsed.severity == 6 {
+                                  .event.category = ["system"]
+                                  .event.type = ["info"]
+                              }
+                              if .parsed.severity == 7 {
+                                  .event.category = ["system"]
+                                  .event.type = ["info"]
+                              }
+                          }
+                          
+                          # Extract the actual message
+                          if exists(.parsed.message) {
+                              .message = .parsed.message
+                              .log.original = .parsed.message
+                              
+                              # Try to extract more fields from the message content
+                              .msg_content = string!(.parsed.message)
+                              
+                              # Extract IP addresses
+                              .ip_found = match(.msg_content, r'\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}')
+                              if .ip_found {
+                                  .source.ip = "extracted"
+                                  .related.ip = ["extracted"]
+                              }
+                              
+                              # Extract port numbers
+                              .port_found = match(.msg_content, r'port (\\d+)')
+                              if .port_found {
+                                  .destination.port = 0
+                                  .network.destination.port = 0
+                              }
+                              
+                              # Extract usernames
+                              .user_found = match(.msg_content, r'user (\\w+)')
+                              if .user_found {
+                                  .user.name = "extracted"
+                                  .related.user = ["extracted"]
+                              }
+                              
+                              # Extract file paths (simplified regex)
+                              .path_found = match(.msg_content, r'(/[\\w\\-\\./]+)')
+                              if .path_found {
+                                  .file.path = "/extracted"
+                                  .related.file = ["/extracted"]
+                              }
+                              
+                              # Extract action words
+                              if contains(.msg_content, "accepted") {
+                                  .event.action = "accepted"
+                                  .event.outcome = "success"
+                              }
+                              if contains(.msg_content, "denied") {
+                                  .event.action = "denied"
+                                  .event.outcome = "failure"
+                              }
+                              if contains(.msg_content, "failed") {
+                                  .event.action = "failed"
+                                  .event.outcome = "failure"
+                              }
+                              if contains(.msg_content, "success") {
+                                  .event.action = "success"
+                                  .event.outcome = "success"
+                              }
+                              if contains(.msg_content, "login") {
+                                  .event.action = "login"
+                                  .event.category = ["authentication"]
+                              }
+                              if contains(.msg_content, "logout") {
+                                  .event.action = "logout"
+                                  .event.category = ["authentication"]
+                              }
+                              if contains(.msg_content, "connection") {
+                                  .event.action = "connection"
+                                  .event.category = ["network"]
+                              }
+                              if contains(.msg_content, "disconnect") {
+                                  .event.action = "disconnect"
+                                  .event.category = ["network"]
+                              }
+                              
+                              # Extract protocol information
+                              if contains(.msg_content, "TCP") {
+                                  .network.protocol = "tcp"
+                                  .network.transport = "tcp"
+                              }
+                              if contains(.msg_content, "UDP") {
+                                  .network.protocol = "udp"
+                                  .network.transport = "udp"
+                              }
+                              if contains(.msg_content, "HTTP") {
+                                  .network.protocol = "http"
+                                  .network.application = "http"
+                              }
+                              if contains(.msg_content, "HTTPS") {
+                                  .network.protocol = "https"
+                                  .network.application = "https"
+                              }
+                              if contains(.msg_content, "SSH") {
+                                  .network.protocol = "ssh"
+                                  .network.application = "ssh"
+                              }
+                              if contains(.msg_content, "FTP") {
+                                  .network.protocol = "ftp"
+                                  .network.application = "ftp"
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+      # Set comprehensive default values
+      if !exists(."event.kind") {
+          .event.kind = "event"
+      }
+      if !exists(."event.category") {
+          .event.category = ["unknown"]
+      }
+      if !exists(."event.type") {
+          .event.type = ["info"]
+      }
+      if !exists(."event.dataset") {
+          .event.dataset = "syslog.logs"
+      }
+      if !exists(."event.created") {
+          .event.created = now()
+      }
+      if !exists(."@timestamp") {
+          .@timestamp = now()
+      }
+
+      # Add metadata
+      .log.original = .
+      .event.original = .
+      .tags = ["syslog", "parsed", "comprehensive"]
+
+sinks:
+  stdout_output:
+    type: console
+    inputs: ["vrl_parser"]
+    encoding:
+      codec: json

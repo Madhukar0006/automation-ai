@@ -1,6 +1,22 @@
 from typing import Dict, Any
 import re
 import json
+def _safe_json_loads(txt: str):
+    """Parse LLM JSON output safely: strip fences, comments, trailing commas."""
+    # strip code fences
+    txt = re.sub(r"^```(?:json)?\s*|\s*```$", "", txt.strip(), flags=re.S)
+    # keep outermost object/array
+    i, j = txt.find("{"), txt.rfind("}")
+    ia, ja = txt.find("["), txt.rfind("]")
+    if i != -1 and j != -1 and (ia == -1 or i < ia):
+        txt = txt[i:j+1]
+    elif ia != -1 and ja != -1:
+        txt = txt[ia:ja+1]
+    # remove comments
+    txt = re.sub(r"//.*?$|/\*.*?\*/", "", txt, flags=re.M|re.S)
+    # remove trailing commas
+    txt = re.sub(r",\s*([}\]])", r"\1", txt)
+    return json.loads(txt)
 
 # Ensure we always defer to log_analyzer for log_format detection
 try:
@@ -79,7 +95,7 @@ def classify_log_lc(raw_log: str, dynamic_prefix: str = "") -> Dict[str, Any]:
     if brace_start >= 0 and brace_end > brace_start:
         json_str = out[brace_start:brace_end + 1]
         try:
-            result = json.loads(json_str)
+            result = _safe_json_loads(json_str)
         except json.JSONDecodeError:
             result = {}
     else:
@@ -165,7 +181,7 @@ def _extract_and_clean_json(text: str, original_log: str) -> Dict[str, Any]:
     
     # Strategy 1: Direct JSON parsing
     try:
-        return json.loads(text)
+        return _safe_json_loads(text)
     except:
         pass
     
@@ -175,7 +191,7 @@ def _extract_and_clean_json(text: str, original_log: str) -> Dict[str, Any]:
     cleaned = cleaned.strip()
     
     try:
-        return json.loads(cleaned)
+        return _safe_json_loads(cleaned)
     except:
         pass
     
@@ -186,7 +202,7 @@ def _extract_and_clean_json(text: str, original_log: str) -> Dict[str, Any]:
     if brace_start >= 0 and brace_end > brace_start:
         json_str = cleaned[brace_start:brace_end + 1]
         try:
-            return json.loads(json_str)
+            return _safe_json_loads(json_str)
         except:
             pass
     
@@ -194,7 +210,7 @@ def _extract_and_clean_json(text: str, original_log: str) -> Dict[str, Any]:
     try:
         # Fix common issues
         fixed_json = _fix_common_json_issues(cleaned)
-        return json.loads(fixed_json)
+        return _safe_json_loads(fixed_json)
     except:
         pass
     
@@ -301,27 +317,21 @@ def _generate_fallback_ecs(original_log: str, error_msg: str) -> Dict[str, Any]:
 
 
 def generate_vrl_lc(context_text: str, raw_log: str, dynamic_prefix: str = "") -> str:
-    """Generate VRL parser using reference examples from data folder with error handling"""
+    """Generate VRL parser using perfect simple templates"""
     try:
-        # Try to use enhanced error handling if available
-        try:
-            from vrl_error_integration import VRL_Error_Integration
-            integration = VRL_Error_Integration()
-            result = integration.generate_vrl_with_error_handling(context_text, raw_log, dynamic_prefix)
-            if result["success"]:
-                return result["vrl_code"]
-        except ImportError:
-            pass  # Fall back to original method
+        # Use simple agent with perfect VRL generation
+        from simple_langchain_agent import SimpleLogParsingAgent
+        from complete_rag_system import CompleteRAGSystem
         
-        # Original VRL generation method
-        log_profile = classify_log_lc(raw_log)
-        reference_vrl = _get_reference_vrl_for_log(log_profile, raw_log)
-        vrl_code = _generate_vrl_from_template(log_profile, raw_log, reference_vrl)
+        rag = CompleteRAGSystem()
+        agent = SimpleLogParsingAgent(rag)
+        result = agent.generate_vrl_parser(raw_log)
         
-        # Apply basic error handling
-        vrl_code = _clean_vrl_output(vrl_code)
-        
-        return vrl_code
+        if result["success"]:
+            return result["vrl_code"]
+        else:
+            # Fallback to automated VRL generation
+            return _generate_fallback_vrl(raw_log, result.get("error", "Unknown error"))
         
     except Exception as e:
         # Fallback to automated VRL generation

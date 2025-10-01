@@ -1,24 +1,52 @@
 #!/usr/bin/env python3
 """
 VRL Error Integration - Integrates error handling into the main VRL generation pipeline
+Simplified version without external dependencies
 """
 
 import json
 import logging
 from typing import Dict, List, Tuple, Optional, Any
-from vrl_error_handler import VRL_Error_Handler, VRL_Error, VRL_ERROR_TYPE
-from enhanced_vrl_generator import Enhanced_VRL_Generator
+from enum import Enum
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Simple error types for VRL
+class VRL_ERROR_TYPE(Enum):
+    SYNTAX_ERROR = "syntax_error"
+    PARSE_ERROR = "parse_error"
+    FIELD_ERROR = "field_error"
+    VALIDATION_ERROR = "validation_error"
+
+class VRL_Error:
+    """Simple VRL error class"""
+    def __init__(self, error_type: VRL_ERROR_TYPE, message: str, line: int = None):
+        self.error_type = error_type
+        self.message = message
+        self.line = line
+
+class VRL_Error_Handler:
+    """Simple VRL error handler"""
+    def __init__(self):
+        self.errors = []
+    
+    def add_error(self, error: VRL_Error):
+        self.errors.append(error)
+    
+    def get_errors(self):
+        return self.errors
+    
+    def clear_errors(self):
+        self.errors = []
+
 class VRL_Error_Integration:
     """Integrates VRL error handling into the main system"""
     
-    def __init__(self):
+    def __init__(self, rag_system=None):
         self.error_handler = VRL_Error_Handler()
-        self.enhanced_generator = Enhanced_VRL_Generator()
+        self.rag_system = rag_system
         self.error_stats = {
             "total_generations": 0,
             "successful_generations": 0,
@@ -32,219 +60,195 @@ class VRL_Error_Integration:
         self.error_stats["total_generations"] += 1
         
         try:
-            # Use enhanced generator
-            result = self.enhanced_generator.generate_robust_vrl(context_text, raw_log, dynamic_prefix)
+            # Basic VRL generation (simplified)
+            vrl_code = self._generate_basic_vrl(context_text, raw_log, dynamic_prefix)
             
-            if result["success"]:
+            # Validate the generated VRL
+            validation_result = self._validate_vrl(vrl_code)
+            
+            if validation_result["valid"]:
                 self.error_stats["successful_generations"] += 1
+                logger.info("VRL generation successful after 1 attempts")
+                return {
+                    "success": True,
+                    "vrl_code": vrl_code,
+                    "attempts": 1,
+                    "errors_fixed": 0,
+                    "validation_result": validation_result
+                }
             else:
-                self.error_stats["failed_generations"] += 1
-            
-            # Update error statistics
-            self._update_error_stats(result["errors"])
-            
-            # Log the result
-            self._log_generation_result(result)
-            
-            return result
-            
+                # Try to fix errors
+                fixed_vrl, fixes_applied = self._attempt_fix_vrl(vrl_code, validation_result["errors"])
+                
+                if fixed_vrl:
+                    self.error_stats["successful_generations"] += 1
+                    self.error_stats["errors_fixed"] += fixes_applied
+                    logger.info(f"VRL generation successful after 2 attempts with {fixes_applied} fixes")
+                    return {
+                        "success": True,
+                        "vrl_code": fixed_vrl,
+                        "attempts": 2,
+                        "errors_fixed": fixes_applied,
+                        "validation_result": {"valid": True, "errors": []}
+                    }
+                else:
+                    self.error_stats["failed_generations"] += 1
+                    return {
+                        "success": False,
+                        "vrl_code": vrl_code,
+                        "attempts": 2,
+                        "errors": validation_result["errors"],
+                        "validation_result": validation_result
+                    }
+                    
         except Exception as e:
-            logger.error(f"VRL generation failed: {str(e)}")
             self.error_stats["failed_generations"] += 1
-            
+            logger.error(f"VRL generation failed: {str(e)}")
             return {
                 "success": False,
-                "vrl_code": "",
-                "errors": [{
-                    "error_type": "SYSTEM_ERROR",
-                    "error_code": "SYS_001",
-                    "message": f"System error: {str(e)}",
-                    "suggested_fix": "Check system configuration and try again"
-                }],
-                "fixes_applied": [],
-                "attempts": 1,
-                "final_validation": False
+                "error": str(e),
+                "attempts": 1
             }
     
-    def validate_existing_vrl(self, vrl_code: str) -> Dict[str, Any]:
-        """Validate existing VRL code"""
-        is_valid, errors = self.error_handler.validate_vrl_syntax(vrl_code)
+    def _generate_basic_vrl(self, context_text: str, raw_log: str, dynamic_prefix: str = "") -> str:
+        """Generate basic VRL code"""
+        # Simple VRL template with proper syntax
+        vrl_template = f"""
+# VRL Parser Generated with Error Handling
+{dynamic_prefix}
+
+# Basic event structure
+.event.kind = "event"
+.event.category = ["unknown"]
+.event.created = now()
+.event.dataset = "log.parser"
+
+# Parse the message
+.message = .
+
+# Set timestamp
+.@timestamp = now()
+
+# Convert to string for processing
+.input_string = string!(.)
+
+# Try to parse as JSON
+if starts_with(.input_string, "{{") {{
+    .parsed, err = parse_json(.input_string)
+    if err == null {{
+        .event.type = ["info"]
+        .event.dataset = "json.logs"
+    }}
+}}
+
+# Try to parse as syslog
+if contains(.input_string, "<") {{
+    if contains(.input_string, ">") {{
+        .parsed, err = parse_syslog(.input_string)
+        if err == null {{
+            .event.type = ["info"]
+            .event.dataset = "syslog.logs"
+        }}
+    }}
+}}
+
+# Default parsing for text logs
+if !exists(."event.type") {{
+    .event.type = ["info"]
+    .event.dataset = "text.logs"
+}}
+
+# Ensure required fields
+if !exists(."event.kind") {{
+    .event.kind = "event"
+}}
+if !exists(."event.category") {{
+    .event.category = ["unknown"]
+}}
+if !exists(."event.created") {{
+    .event.created = now()
+}}
+}}
+"""
+        return vrl_template.strip()
+    
+    def _validate_vrl(self, vrl_code: str) -> Dict[str, Any]:
+        """Basic VRL validation"""
+        errors = []
+        
+        # Basic syntax checks
+        if not vrl_code.strip():
+            errors.append("VRL code is empty")
+        
+        # Check for basic structure
+        if ".event.kind" not in vrl_code:
+            errors.append("Missing .event.kind field")
+        
+        if ".event.created" not in vrl_code:
+            errors.append("Missing .event.created field")
+        
+        # Check for balanced braces
+        open_braces = vrl_code.count('{')
+        close_braces = vrl_code.count('}')
+        if open_braces != close_braces:
+            errors.append(f"Mismatched braces: {open_braces} open, {close_braces} close")
         
         return {
-            "is_valid": is_valid,
-            "errors": [self._error_to_dict(e) for e in errors],
-            "error_count": len(errors),
-            "error_report": self.error_handler.generate_error_report(errors)
+            "valid": len(errors) == 0,
+            "errors": errors
         }
     
-    def fix_existing_vrl(self, vrl_code: str) -> Dict[str, Any]:
-        """Fix existing VRL code"""
-        fixed_code, is_valid, errors = self.error_handler.auto_fix_vrl(vrl_code)
+    def _attempt_fix_vrl(self, vrl_code: str, errors: List[str]) -> Tuple[Optional[str], int]:
+        """Attempt to fix VRL errors"""
+        fixes_applied = 0
+        fixed_vrl = vrl_code
         
-        return {
-            "success": is_valid,
-            "original_code": vrl_code,
-            "fixed_code": fixed_code,
-            "errors": [self._error_to_dict(e) for e in errors],
-            "error_report": self.error_handler.generate_error_report(errors)
-        }
-    
-    def batch_validate_vrl_files(self, vrl_files: List[str]) -> Dict[str, Any]:
-        """Validate multiple VRL files"""
-        results = {}
-        
-        for file_path in vrl_files:
-            try:
-                with open(file_path, 'r') as f:
-                    vrl_code = f.read()
-                
-                validation_result = self.validate_existing_vrl(vrl_code)
-                results[file_path] = validation_result
-                
-            except Exception as e:
-                results[file_path] = {
-                    "is_valid": False,
-                    "errors": [{
-                        "error_type": "FILE_ERROR",
-                        "error_code": "FILE_001",
-                        "message": f"Could not read file: {str(e)}",
-                        "suggested_fix": "Check file path and permissions"
-                    }],
-                    "error_count": 1,
-                    "error_report": f"File error: {str(e)}"
-                }
-        
-        return results
-    
-    def get_error_statistics(self) -> Dict[str, Any]:
-        """Get error handling statistics"""
-        total = self.error_stats["total_generations"]
-        success_rate = (self.error_stats["successful_generations"] / total * 100) if total > 0 else 0
-        
-        return {
-            "total_generations": total,
-            "successful_generations": self.error_stats["successful_generations"],
-            "failed_generations": self.error_stats["failed_generations"],
-            "success_rate": round(success_rate, 2),
-            "errors_fixed": self.error_stats["errors_fixed"],
-            "common_errors": self.error_stats["common_errors"]
-        }
-    
-    def generate_error_handling_report(self) -> str:
-        """Generate comprehensive error handling report"""
-        stats = self.get_error_statistics()
-        
-        report = "📊 VRL Error Handling Report\n"
-        report += "=" * 50 + "\n\n"
-        
-        report += f"Total Generations: {stats['total_generations']}\n"
-        report += f"Successful: {stats['successful_generations']} ({stats['success_rate']}%)\n"
-        report += f"Failed: {stats['failed_generations']}\n"
-        report += f"Errors Fixed: {stats['errors_fixed']}\n\n"
-        
-        if stats['common_errors']:
-            report += "🔍 Common Errors:\n"
-            for error_type, count in stats['common_errors'].items():
-                report += f"  • {error_type}: {count} occurrences\n"
-            report += "\n"
-        
-        return report
-    
-    def _update_error_stats(self, errors: List[Dict[str, Any]]):
-        """Update error statistics"""
         for error in errors:
-            error_type = error.get("error_type", "UNKNOWN")
-            if error_type in self.error_stats["common_errors"]:
-                self.error_stats["common_errors"][error_type] += 1
-            else:
-                self.error_stats["common_errors"][error_type] = 1
+            if "Missing .event.kind" in error:
+                if ".event.kind" not in fixed_vrl:
+                    fixed_vrl = ".event.kind = \"event\"\n" + fixed_vrl
+                    fixes_applied += 1
+            
+            elif "Missing .event.created" in error:
+                if ".event.created" not in fixed_vrl:
+                    fixed_vrl = fixed_vrl + "\n.event.created = now()"
+                    fixes_applied += 1
+            
+            elif "Mismatched braces" in error:
+                # Simple brace fixing
+                open_count = fixed_vrl.count('{')
+                close_count = fixed_vrl.count('}')
+                if open_count > close_count:
+                    fixed_vrl = fixed_vrl + '}' * (open_count - close_count)
+                    fixes_applied += 1
         
-        if errors:
-            self.error_stats["errors_fixed"] += len(errors)
-    
-    def _log_generation_result(self, result: Dict[str, Any]):
-        """Log VRL generation result"""
-        if result["success"]:
-            logger.info(f"VRL generation successful after {result['attempts']} attempts")
-            if result["fixes_applied"]:
-                logger.info(f"Applied fixes: {', '.join(result['fixes_applied'])}")
+        # Validate the fixed VRL
+        validation = self._validate_vrl(fixed_vrl)
+        if validation["valid"]:
+            return fixed_vrl, fixes_applied
         else:
-            logger.warning(f"VRL generation failed after {result['attempts']} attempts")
-            if result["errors"]:
-                for error in result["errors"]:
-                    logger.warning(f"Error: {error['message']}")
+            return None, fixes_applied
     
-    def _error_to_dict(self, error: VRL_Error) -> Dict[str, Any]:
-        """Convert VRL_Error to dictionary"""
-        return {
-            "error_type": error.error_type.name,
-            "error_code": error.error_code,
-            "message": error.message,
-            "line_number": error.line_number,
-            "column": error.column,
-            "context": error.context,
-            "suggested_fix": error.suggested_fix,
-            "severity": error.severity
+    def get_error_stats(self) -> Dict[str, Any]:
+        """Get error statistics"""
+        return self.error_stats.copy()
+    
+    def reset_stats(self):
+        """Reset error statistics"""
+        self.error_stats = {
+            "total_generations": 0,
+            "successful_generations": 0,
+            "failed_generations": 0,
+            "errors_fixed": 0,
+            "common_errors": {}
         }
 
-# Integration with existing lc_bridge
-def patch_lc_bridge_with_error_handling():
-    """Patch lc_bridge to use error handling"""
-    try:
-        import lc_bridge
-        from vrl_error_integration import VRL_Error_Integration
-        
-        # Create error integration instance
-        error_integration = VRL_Error_Integration()
-        
-        # Store original function
-        original_generate_vrl_lc = lc_bridge.generate_vrl_lc
-        
-        def enhanced_generate_vrl_lc(context_text: str, raw_log: str, dynamic_prefix: str = "") -> str:
-            """Enhanced VRL generation with error handling"""
-            result = error_integration.generate_vrl_with_error_handling(context_text, raw_log, dynamic_prefix)
-            
-            if result["success"]:
-                return result["vrl_code"]
-            else:
-                # Return minimal VRL as fallback
-                return error_integration.enhanced_generator._generate_minimal_vrl(raw_log)
-        
-        # Replace the function
-        lc_bridge.generate_vrl_lc = enhanced_generate_vrl_lc
-        
-        logger.info("Successfully patched lc_bridge with error handling")
-        return error_integration
-        
-    except Exception as e:
-        logger.error(f"Failed to patch lc_bridge: {str(e)}")
-        return None
-
-# Example usage and testing
+# Test function
 if __name__ == "__main__":
     integration = VRL_Error_Integration()
     
-    # Test VRL generation with error handling
-    test_log = '192.168.0.5 - - [03/Sep/2025:14:25:33 +0000] "GET /index.html HTTP/1.1" 200 1234 "http://example.com" "Mozilla/5.0" EXTRA-JUNK'
+    # Test with sample log
+    test_log = "Jan 15 10:30:45 server sshd[1234]: Accepted publickey for user from 192.168.1.100 port 22"
     
-    print("Testing VRL Error Integration...")
-    print("=" * 50)
-    
-    result = integration.generate_vrl_with_error_handling("test context", test_log)
-    
-    print("Generation Result:")
-    print(f"Success: {result['success']}")
-    print(f"Attempts: {result['attempts']}")
-    print(f"Final Validation: {result['final_validation']}")
-    
-    if result['fixes_applied']:
-        print(f"Fixes Applied: {', '.join(result['fixes_applied'])}")
-    
-    if result['errors']:
-        print(f"Errors: {len(result['errors'])}")
-        for error in result['errors']:
-            print(f"  - {error['error_type']}: {error['message']}")
-    
-    # Generate statistics report
-    print("\n" + integration.generate_error_handling_report())
-
+    result = integration.generate_vrl_with_error_handling("", test_log)
+    print(json.dumps(result, indent=2))

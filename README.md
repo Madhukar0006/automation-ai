@@ -1,167 +1,169 @@
-<<<<<<< HEAD
-# agentic-dpm-parsers
-repo to track agentic dpm parsers development
-=======
-# 🧠 AI Log Parser - Complete System
+# VRL Parser Automation System
 
-## Overview
-A comprehensive AI-powered log parsing automation system that generates VRL (Vector Remap Language) parsers using RAG (Retrieval-Augmented Generation), embeddings, and intelligent agents. The system produces accurate parsers similar to how a human would write them.
+A comprehensive log parsing system that generates Vector Remap Language (VRL) parsers using AI agents, GROK patterns, and ECS-compliant field mapping.
 
-## 🚀 Quick Start
+## 🚀 Features
 
-### Option 1: Automated Setup (Recommended)
+- **AI-Powered VRL Generation**: Uses LangChain agents to generate intelligent VRL parsers
+- **GROK Pattern Support**: Replaces regex with clean GROK patterns for better parsing
+- **ECS Compliance**: Maps fields to Elastic Common Schema (ECS) with proper categorization
+- **Docker Validation**: Validates VRL parsers using Docker and Vector CLI
+- **Multi-Agent Workflow**: 4-agent orchestration system for comprehensive parsing
+- **Web UI**: Streamlit-based interface for easy interaction
+- **RAG System**: Retrieval Augmented Generation for context-aware parsing
+
+## 📋 Main Components
+
+### Core Application
+- `main_app.py` - Main Streamlit UI application
+- `run_app.py` - Application runner script
+- `requirements.txt` - Python dependencies
+
+### Agent System
+- `simple_langchain_agent.py` - Main VRL generation agent
+- `four_agent_orchestrator.py` - 4-agent workflow orchestration
+- `ec2_deployment/agent03_validator.py` - Docker validation agent
+
+### RAG System
+- `complete_rag_system.py` - Main RAG system
+- `lc_bridge.py` - LangChain bridge functions
+
+### VRL Parsers
+- `clean_grok_parser.py` - Clean GROK-based parsers (current)
+- `comprehensive_vrl_parser.py` - Comprehensive syslog parser
+- `comprehensive_json_vrl.py` - Comprehensive JSON parser
+
+### Data Files
+- `data/ecsfields.json` - ECS field definitions
+- `data/vrl.json` - VRL function definitions
+- `data/all.json` - Sample log data
+
+### Docker Setup
+- `docker-compose-test.yaml` - Docker validation setup
+- `docker/vector_config/config.yaml` - Vector configuration
+
+## 🛠️ Installation
+
+1. Clone the repository:
 ```bash
-python3 run_app.py
+git clone <your-repo-url>
+cd parserautomation
 ```
 
-### Option 2: Manual Setup
+2. Install dependencies:
 ```bash
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# Start Ollama (if not running)
-ollama serve
-
-# Run the application
+3. Run the application:
+```bash
 streamlit run main_app.py
 ```
 
-## 🎯 Key Features
+## 🎯 Usage
 
-### 🤖 Agent-Based Parsing
-- **Intelligent Workflow**: ReAct agent follows logical sequence (identify → retrieve context → generate parser)
-- **Streaming Mode**: Real-time visibility into agent reasoning
-- **Tool-based Architecture**: Specialized tools for each parsing step
+### Web Interface
+1. Open your browser to `http://localhost:8501`
+2. Choose your parsing mode:
+   - **Agent Parser**: AI-powered VRL generation
+   - **Docker Validation**: Test parsers with Docker
+   - **Classic Parser**: Traditional parsing methods
 
-### 🧠 Complete RAG System
-- **Embedding Models**: Automatic download and setup of sentence-transformers models
-- **ChromaDB Integration**: Persistent vector database for knowledge storage
-- **Knowledge Base**: VRL snippets, ECS fields, and log examples
-- **Context Retrieval**: Intelligent context building for better parser generation
+### Docker Validation
+1. Ensure Docker is running
+2. Use the Docker Validation tab in the UI
+3. Test your VRL parsers with real log data
 
-### 📊 Multiple Parsing Modes
-- **Agent Mode**: Intelligent step-by-step parsing with reasoning
-- **Classic Mode**: Direct LLM-based parsing (original functionality)
-- **Test Mode**: Comprehensive testing with sample logs
+## 🔧 Key Features
 
-### ⚙️ Advanced Features
-- **Multi-Model Support**: Ollama with llama3.2 and phi3:mini models
-- **ECS Compliance**: Structured JSON following Elastic Common Schema
-- **Vector CLI Integration**: Test generated VRL parsers with real Vector runtime
-- **Streaming Support**: Real-time parsing progress and results
+### GROK-Based Parsing
+- Uses GROK patterns instead of complex regex
+- Cleaner, more maintainable parsing logic
+- Better error handling and validation
 
-## 🏗️ Architecture
+### ECS Compliance
+- Maps fields to Elastic Common Schema
+- Non-ECS fields go to `event_data` section
+- Maintains proper data structure for Elasticsearch
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Raw Log       │───▶│  Agent System    │───▶│  VRL/JSON       │
-│   Input         │    │  (ReAct Pattern) │    │  Output         │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                              │
-                              ▼
-                       ┌──────────────────┐
-                       │  RAG System:     │
-                       │  • Embeddings    │
-                       │  • ChromaDB      │
-                       │  • Knowledge     │
-                       │  • Context       │
-                       └──────────────────┘
-```
+### No Nested Duplication
+- Eliminates recursive processing
+- Clean, flat JSON structure
+- No event wrapping issues
+
+## 📊 Supported Log Formats
+
+- **Syslog**: RFC 3164 and RFC 5424 formats
+- **JSON**: Structured JSON logs
+- **Generic**: Custom text-based logs
+- **Apache Access**: Web server logs
+- **Windows Security**: Windows event logs
+
+## 🐳 Docker Support
+
+The system includes Docker validation:
+- Vector CLI integration
+- Containerized parsing environment
+- Real-time validation feedback
+
+## 🤖 AI Agents
+
+### Agent01: Log Analysis
+- Analyzes log structure and format
+- Identifies parsing requirements
+
+### Agent02: VRL Generation
+- Generates VRL parsing code
+- Uses GROK patterns and ECS mapping
+
+### Agent03: Docker Validation
+- Validates VRL with Docker
+- Provides feedback for improvements
+
+### Agent04: Field Mapping
+- Maps fields to ECS structure
+- Handles non-ECS field categorization
 
 ## 📁 Project Structure
 
 ```
-parserautomation/
-├── main_app.py              # Main integrated application
-├── complete_rag_system.py   # Complete RAG system with embeddings
-├── simple_agent.py          # Simplified agent framework
-├── lc_bridge.py            # LangChain integration
-├── log_analyzer.py         # Basic log type identification
-├── run_app.py              # Automated startup script
-├── requirements.txt        # Dependencies
-├── data/                   # Data directory
-│   ├── log_samples/        # Sample log files
-│   ├── vrl_snippets/       # VRL code snippets
-│   └── reference_examples/ # Reference parsing examples
-├── chroma_db/              # ChromaDB storage
-└── models/                 # Downloaded embedding models
+├── main_app.py                 # Main UI application
+├── simple_langchain_agent.py   # VRL generation agent
+├── clean_grok_parser.py        # GROK-based parsers
+├── complete_rag_system.py      # RAG system
+├── four_agent_orchestrator.py  # Agent orchestration
+├── data/                       # Data files
+│   ├── ecsfields.json         # ECS field definitions
+│   ├── vrl.json               # VRL functions
+│   └── all.json               # Sample data
+├── docker/                     # Docker configuration
+│   └── vector_config/         # Vector config files
+└── ec2_deployment/            # Deployment files
+    └── agent03_validator.py   # Docker validator
 ```
 
-## 🎮 Usage Modes
+## 🔍 Testing
 
-### 1. RAG Setup Mode
-- Initialize embedding models and ChromaDB
-- Create knowledge base with VRL snippets and ECS fields
-- Test RAG system with sample queries
+Test your VRL parsers:
+```bash
+vector validate docker/vector_config/config.yaml
+```
 
-### 2. Agent Mode
-- Intelligent parsing with step-by-step reasoning
-- Streaming mode for real-time progress
-- Automatic log type detection and appropriate parser generation
+## 📝 License
 
-### 3. Classic Mode
-- Direct LLM-based parsing (original functionality)
-- Manual control over parsing steps
-- Individual tool testing
+This project is licensed under the MIT License.
 
-### 4. Test Mode
-- Comprehensive testing with sample logs
-- Performance validation
-- System health checks
+## 🤝 Contributing
 
-## 🔧 Configuration
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-### Models
-- **Classification Model**: `llama3.2:latest` (for log identification)
-- **VRL Generation Model**: `phi3:mini` (for VRL code generation)
-- **Embedding Model**: `all-MiniLM-L6-v2` (for RAG system)
+## 📞 Support
 
-### Output Types
-- **Auto**: Automatically choose JSON for JSON logs, VRL for others
-- **JSON**: Force ECS JSON generation
-- **VRL**: Force VRL parser generation
+For issues and questions, please open an issue in the GitHub repository.
 
-## 🧪 Testing
+---
 
-The system includes comprehensive testing capabilities:
-
-- **Unit Tests**: Individual component testing
-- **Integration Tests**: End-to-end parsing workflows
-- **Sample Logs**: Pre-configured test cases for common log types
-- **Vector CLI Testing**: Real VRL parser validation
-
-## 📊 Performance
-
-- **95%+ Accuracy**: Target parsing success rate
-- **ECS Compliance**: Full Elastic Common Schema support
-- **Multi-Vendor Support**: Cisco, Microsoft, Checkpoint, Fortinet, Palo Alto
-- **Real-time Processing**: Streaming mode for immediate feedback
-
-## 🔄 Human Parser Workflow (Automated)
-
-The system emulates the human parser writing process:
-
-1. **Examine raw samples** → Pattern identification
-2. **Decide parsing strategy** → Automatic strategy selection
-3. **Write extraction rules** → VRL code generation
-4. **Normalize data types** → ECS field mapping
-5. **Map to schema** → Structured output
-6. **Add fallback rules** → Error handling
-7. **Test and iterate** → Vector CLI validation
-8. **Record patterns** → RAG knowledge base updates
-
-## 🚀 Next Steps
-
-1. **Run the application**: `python3 run_app.py`
-2. **Initialize RAG system** in the RAG Setup tab
-3. **Test with sample logs** in the Test Mode
-4. **Use Agent Mode** for intelligent parsing
-5. **Integrate with your logs** for production use
-
-## 📝 Notes
-
-- First-time setup may take a few minutes to download embedding models
-- Ensure Ollama is running for LLM functionality
-- ChromaDB automatically persists knowledge base between sessions
-- All generated VRL can be tested with Vector CLI integration
->>>>>>> 482c874 (Initial commit for parser automation configs)
+**Ready to parse logs like a pro!** 🚀
