@@ -1,0 +1,14 @@
+[sources.dummy]
+type = "stdin"
+
+[transforms.test_transform]
+type = "remap"
+inputs = ["dummy"]
+source = '''
+.event.kind = "event"
+'''
+
+[sinks.dummy_out]
+type = "console"
+inputs = ["test_transform"]
+encoding.codec = "json"

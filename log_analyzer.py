@@ -25,8 +25,8 @@ LEEF_REGEX = re.compile(r'LEEF:[12]\.0\|')
 # Common Log Format (CLF) for web servers
 CLF_REGEX = re.compile(r'(\S+)\s(\S+)\s(\S+)\s\[([^\]]+)\]\s"([^"]+)"\s(\d{3})\s(\d+|-)')
 
-# Simple Key-Value Pair regex
-KV_REGEX = re.compile(r'(\w+)=([^=\s]+(?:\s[^=\s]+)*)')
+# Enhanced Key-Value Pair regex that handles quoted values
+KV_REGEX = re.compile(r'(\w+)=(?:"([^"]*)"|([^=\s]+))')
 
 # --- Helper Functions ---
 def is_json(line):

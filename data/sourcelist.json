@@ -1,0 +1,104 @@
+[
+  {
+    "observer": {
+      "vendor": "Trend Micro",
+      "product": "Deep Security Agent",
+      "type": "security"
+    },
+    "log_source": "cef",
+    "log_type": "security",
+    "description": "Trend Micro Deep Security Agent CEF logs"
+  },
+  {
+    "observer": {
+      "vendor": "Fortinet",
+      "product": "FortiGate",
+      "type": "security"
+    },
+    "log_source": "cef",
+    "log_type": "security",
+    "description": "Fortinet FortiGate firewall CEF logs"
+  },
+  {
+    "observer": {
+      "vendor": "Cisco",
+      "product": "ASA",
+      "type": "security"
+    },
+    "log_source": "cef",
+    "log_type": "security",
+    "description": "Cisco ASA firewall CEF logs"
+  },
+  {
+    "observer": {
+      "vendor": "GitHub",
+      "product": "Gitauth",
+      "type": "authentication"
+    },
+    "log_source": "keyvalue",
+    "log_type": "authentication",
+    "description": "GitHub Gitauth authentication logs"
+  },
+  {
+    "observer": {
+      "vendor": "Apache",
+      "product": "HTTP Server",
+      "type": "web"
+    },
+    "log_source": "syslog",
+    "log_type": "access",
+    "description": "Apache HTTP server access logs"
+  },
+  {
+    "observer": {
+      "vendor": "Nginx",
+      "product": "HTTP Server",
+      "type": "web"
+    },
+    "log_source": "syslog",
+    "log_type": "access",
+    "description": "Nginx HTTP server access logs"
+  },
+  {
+    "observer": {
+      "vendor": "Generic",
+      "product": "Application",
+      "type": "application"
+    },
+    "log_source": "json",
+    "log_type": "application",
+    "description": "Generic application JSON logs"
+  },
+  {
+    "observer": {
+      "vendor": "Microsoft",
+      "product": "Windows",
+      "type": "system"
+    },
+    "log_source": "syslog",
+    "log_type": "system",
+    "description": "Microsoft Windows system logs"
+  },
+  {
+    "observer": {
+      "vendor": "Linux",
+      "product": "System",
+      "type": "system"
+    },
+    "log_source": "syslog",
+    "log_type": "system",
+    "description": "Linux system logs"
+  },
+  {
+    "observer": {
+      "vendor": "Elastic",
+      "product": "Elasticsearch",
+      "type": "database"
+    },
+    "log_source": "json",
+    "log_type": "database",
+    "description": "Elasticsearch database logs"
+  }
+]
+
+

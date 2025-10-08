@@ -1,0 +1,24 @@
+{
+  "start_time": "2025-10-07T16:15:17.510144",
+  "requests": 2,
+  "total_tokens": 2100,
+  "total_cost": 0.0105,
+  "requests_detail": [
+    {
+      "timestamp": "2025-10-07T16:15:17.510176",
+      "model": "gpt-4o",
+      "prompt_tokens": 800,
+      "completion_tokens": 400,
+      "total_tokens": 1200,
+      "cost": 0.006
+    },
+    {
+      "timestamp": "2025-10-07T16:15:17.510515",
+      "model": "gpt-4o",
+      "prompt_tokens": 600,
+      "completion_tokens": 300,
+      "total_tokens": 900,
+      "cost": 0.0045000000000000005
+    }
+  ]
+}

@@ -1,0 +1,343 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+data:
+  config.yaml: |
+    data_dir: /vector/data
+    
+    sources:
+      file_source:
+        type: file
+        include:
+          - /vector/logs/*.log
+        read_from: beginning
+        
+    transforms:
+      syslog_transform:
+        type: remap
+        inputs: [file_source]
+        source: |
+          
+##################################################
+## Syslog Parser - ECS Field Mapping + event_data
+##################################################
+
+### ECS observer defaults
+if !exists(.observer.type) { .observer.type = "system" }
+if !exists(.observer.vendor) { .observer.vendor = "syslog" }
+if !exists(.observer.product) { .observer.product = "syslog" }
+
+### ECS event base defaults
+if !exists(.event.dataset) { .event.dataset = "syslog.logs" }
+.event.category = ["network", "system"]
+.event.type = ["info"]
+.event.kind = "event"
+
+##################################################
+### Parse syslog message
+##################################################
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+# Parse Syslog format using built-in parse_syslog function
+syslog_parsed, syslog_err = parse_syslog(raw)
+
+##################################################
+### Store ALL fields in event_data + Map to ECS
+##################################################
+if syslog_err == null && is_object(syslog_parsed) {
+    .event.dataset = "syslog.logs"
+    .observer.type = "system"
+    
+    # Store the entire parsed syslog in event_data for maximum field preservation
+    .event_data = syslog_parsed
+    
+    # ===== TIMESTAMP MAPPING =====
+    if exists(syslog_parsed.timestamp) { 
+        .@timestamp = syslog_parsed.timestamp
+        .event_data.parsed_timestamp = syslog_parsed.timestamp
+        .event_data.ecs_timestamp = syslog_parsed.timestamp
+    }
+    
+    # ===== HOST MAPPING =====
+    if exists(syslog_parsed.hostname) { 
+        .host.hostname = syslog_parsed.hostname
+        .host.name = syslog_parsed.hostname
+        .event_data.parsed_hostname = syslog_parsed.hostname
+        .event_data.ecs_host_hostname = syslog_parsed.hostname
+        .event_data.ecs_host_name = syslog_parsed.hostname
+    }
+    
+    # ===== SERVICE MAPPING =====
+    if exists(syslog_parsed.appname) { 
+        .service.name = syslog_parsed.appname
+        .process.name = syslog_parsed.appname
+        .event_data.parsed_appname = syslog_parsed.appname
+        .event_data.ecs_service_name = syslog_parsed.appname
+        .event_data.ecs_process_name = syslog_parsed.appname
+    }
+    
+    # ===== PROCESS MAPPING =====
+    if exists(syslog_parsed.procid) { 
+        .process.pid = to_int(syslog_parsed.procid) ?? null
+        .event_data.parsed_procid = syslog_parsed.procid
+        .event_data.ecs_process_pid = to_int(syslog_parsed.procid) ?? null
+    }
+    
+    # ===== MESSAGE MAPPING =====
+    if exists(syslog_parsed.message) { 
+        .message = syslog_parsed.message
+        .event_data.parsed_message = syslog_parsed.message
+        .event_data.ecs_message = syslog_parsed.message
+    }
+    
+    # ===== SEVERITY MAPPING =====
+    if exists(syslog_parsed.severity) { 
+        .log.syslog.severity.code = syslog_parsed.severity
+        .event_data.parsed_severity = syslog_parsed.severity
+        .event_data.ecs_log_syslog_severity_code = syslog_parsed.severity
+        
+        # Map syslog severity to log level
+        sev = to_int(syslog_parsed.severity) ?? 0
+        if sev <= 3 { 
+            .log.level = "error"
+            .event_data.ecs_log_level = "error"
+        }
+        if sev == 4 { 
+            .log.level = "warn"
+            .event_data.ecs_log_level = "warn"
+        }
+        if sev >= 5 { 
+            .log.level = "info"
+            .event_data.ecs_log_level = "info"
+        }
+    }
+    
+    # ===== FACILITY MAPPING =====
+    if exists(syslog_parsed.facility) { 
+        .log.syslog.facility.code = syslog_parsed.facility
+        .event_data.parsed_facility = syslog_parsed.facility
+        .event_data.ecs_log_syslog_facility_code = syslog_parsed.facility
+    }
+    
+    # ===== MESSAGE ID MAPPING =====
+    if exists(syslog_parsed.msgid) { 
+        .event.id = syslog_parsed.msgid
+        .event_data.parsed_msgid = syslog_parsed.msgid
+        .event_data.ecs_event_id = syslog_parsed.msgid
+    }
+    
+    # ===== VERSION MAPPING =====
+    if exists(syslog_parsed.version) { 
+        .event_data.parsed_version = syslog_parsed.version
+        .event_data.ecs_version = syslog_parsed.version
+    }
+    
+    # ===== STRUCTURED DATA MAPPING =====
+    if exists(syslog_parsed.structured_data) { 
+        .event_data.parsed_structured_data = syslog_parsed.structured_data
+        .event_data.ecs_structured_data = syslog_parsed.structured_data
+    }
+}
+
+##################################################
+### Extract additional fields from message
+##################################################
+if exists(.message) {
+    msg = string!(.message)
+    
+    # Extract IP addresses using GROK
+    ip_match, err = parse_grok(msg, "%{IP:source_ip}")
+    if err == null && exists(ip_match.source_ip) {
+        .source.ip = ip_match.source_ip
+        .event_data.extracted_source_ip = ip_match.source_ip
+        .event_data.ecs_source_ip = ip_match.source_ip
+    }
+    
+    # Extract port numbers using GROK
+    port_match, err = parse_grok(msg, "port %{INT:port}")
+    if err == null && exists(port_match.port) {
+        .source.port = to_int(port_match.port) ?? null
+        .event_data.extracted_port = port_match.port
+        .event_data.ecs_source_port = to_int(port_match.port) ?? null
+    }
+    
+    # Extract usernames using GROK
+    user_match, err = parse_grok(msg, "user %{USERNAME:username}")
+    if err == null && exists(user_match.username) {
+        .user.name = user_match.username
+        .event_data.extracted_username = user_match.username
+        .event_data.ecs_user_name = user_match.username
+    }
+    
+    # Extract failed password attempts
+    failed_match, err = parse_grok(msg, "Failed password for %{USERNAME:failed_user} from %{IP:failed_ip}")
+    if err == null && exists(failed_match.failed_user) {
+        .user.name = failed_match.failed_user
+        .source.ip = failed_match.failed_ip
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+        .event.outcome = "failure"
+        .event_data.extracted_failed_user = failed_match.failed_user
+        .event_data.extracted_failed_ip = failed_match.failed_ip
+        .event_data.ecs_user_name = failed_match.failed_user
+        .event_data.ecs_source_ip = failed_match.failed_ip
+        .event_data.ecs_event_category = ["authentication"]
+        .event_data.ecs_event_type = ["start"]
+        .event_data.ecs_event_outcome = "failure"
+    }
+    
+    # Extract successful logins
+    success_match, err = parse_grok(msg, "Accepted password for %{USERNAME:success_user} from %{IP:success_ip}")
+    if err == null && exists(success_match.success_user) {
+        .user.name = success_match.success_user
+        .source.ip = success_match.success_ip
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+        .event.outcome = "success"
+        .event_data.extracted_success_user = success_match.success_user
+        .event_data.extracted_success_ip = success_match.success_ip
+        .event_data.ecs_user_name = success_match.success_user
+        .event_data.ecs_source_ip = success_match.success_ip
+        .event_data.ecs_event_category = ["authentication"]
+        .event_data.ecs_event_type = ["start"]
+        .event_data.ecs_event_outcome = "success"
+    }
+    
+    # Detect event categories based on message content
+    if contains(msg, "authentication") || contains(msg, "login") || contains(msg, "password") {
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+        .event_data.ecs_event_category = ["authentication"]
+        .event_data.ecs_event_type = ["start"]
+    }
+    
+    if contains(msg, "network") || contains(msg, "connection") || contains(msg, "connect") {
+        .event.category = ["network"]
+        .event.type = ["connection"]
+        .event_data.ecs_event_category = ["network"]
+        .event_data.ecs_event_type = ["connection"]
+    }
+    
+    if contains(msg, "file") || contains(msg, "access") || contains(msg, "read") || contains(msg, "write") {
+        .event.category = ["file"]
+        .event.type = ["access"]
+        .event_data.ecs_event_category = ["file"]
+        .event_data.ecs_event_type = ["access"]
+    }
+    
+    # Detect success/failure based on message content
+    if contains(msg, "failed") || contains(msg, "failure") || contains(msg, "error") || contains(msg, "denied") {
+        .event.outcome = "failure"
+        .event_data.ecs_event_outcome = "failure"
+    }
+    
+    if contains(msg, "success") || contains(msg, "accepted") || contains(msg, "completed") || contains(msg, "allowed") {
+        .event.outcome = "success"
+        .event_data.ecs_event_outcome = "success"
+    }
+    
+    # Detect protocols
+    if contains(msg, "TCP") {
+        .network.protocol = "tcp"
+        .network.transport = "tcp"
+        .event_data.ecs_network_protocol = "tcp"
+        .event_data.ecs_network_transport = "tcp"
+    }
+    
+    if contains(msg, "UDP") {
+        .network.protocol = "udp"
+        .network.transport = "udp"
+        .event_data.ecs_network_protocol = "udp"
+        .event_data.ecs_network_transport = "udp"
+    }
+    
+    if contains(msg, "HTTP") {
+        .network.protocol = "http"
+        .network.application = "http"
+        .event_data.ecs_network_protocol = "http"
+        .event_data.ecs_network_application = "http"
+    }
+    
+    if contains(msg, "HTTPS") {
+        .network.protocol = "https"
+        .network.application = "https"
+        .event_data.ecs_network_protocol = "https"
+        .event_data.ecs_network_application = "https"
+    }
+    
+    # Extract SSH connections
+    ssh_match, err = parse_grok(msg, "SSH connection from %{IP:ssh_ip}")
+    if err == null && exists(ssh_match.ssh_ip) {
+        .source.ip = ssh_match.ssh_ip
+        .network.protocol = "ssh"
+        .event.category = ["network"]
+        .event.type = ["connection"]
+        .event_data.extracted_ssh_ip = ssh_match.ssh_ip
+        .event_data.ecs_source_ip = ssh_match.ssh_ip
+        .event_data.ecs_network_protocol = "ssh"
+        .event_data.ecs_event_category = ["network"]
+        .event_data.ecs_event_type = ["connection"]
+    }
+    
+    # Extract service names from common patterns
+    service_match, err = parse_grok(msg, "%{WORD:service_name}")
+    if err == null && exists(service_match.service_name) {
+        service_name = string!(service_match.service_name)
+        if service_name == "sshd" || service_name == "apache" || service_name == "nginx" || service_name == "mysql" {
+            .service.name = service_name
+            .event_data.extracted_service_name = service_name
+            .event_data.ecs_service_name = service_name
+        }
+    }
+}
+
+##################################################
+### Related entities
+##################################################
+.related.ip = []
+.related.user = []
+.related.hosts = []
+
+if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }
+if exists(.destination.ip) { .related.ip = push(.related.ip, .destination.ip) }
+if exists(.user.name) { .related.user = push(.related.user, .user.name) }
+if exists(.source.user.name) { .related.user = push(.related.user, .source.user.name) }
+if exists(.destination.user.name) { .related.user = push(.related.user, .destination.user.name) }
+if exists(.host.hostname) { .related.hosts = push(.related.hosts, .host.hostname) }
+if exists(.host.name) { .related.hosts = push(.related.hosts, .host.name) }
+
+.related.ip = unique(flatten(.related.ip))
+.related.user = unique(flatten(.related.user))
+.related.hosts = unique(flatten(.related.hosts))
+
+##################################################
+### Timestamp and metadata
+##################################################
+if !exists(.@timestamp) {
+    .@timestamp = now()
+}
+
+if !exists(.event.created) {
+    .event.created = now()
+}
+
+.log.original = raw
+
+##################################################
+### Compact final object
+##################################################
+. = compact(., string: true, array: true, object: true, null: true)
+
+          
+    sinks:
+      file_sink:
+        type: file
+        inputs: [["syslog_transform"]]
+        path: /vector/output/processed-logs.json
+        encoding:
+          codec: json
+        buffer:
+          type: memory
+          max_events: 100

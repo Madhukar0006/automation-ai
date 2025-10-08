@@ -1,91 +1,53 @@
-# Final Working Vector Configuration with Compact
+# Vector Configuration for VRL Validation with Console Output
 data_dir: ./data
+
+# Enable more verbose logging
+log_schema:
+  host_key: "host"
+  message_key: "message"
+  timestamp_key: "timestamp"
 
 sources:
   file_input:
     type: file
     include: ["vector_logs/test.log"]
     read_from: beginning
+    # Show what's being read
+    fingerprint:
+      strategy: "device_and_inode"
 
 transforms:
   vrl_parser:
     type: remap
     inputs: ["file_input"]
-    source: |
-      # Perfect Working Syslog Parser
-      .event.kind = "event"
-      .event.category = ["network", "system"]
-      .event.type = ["info"]
-      .event.dataset = "syslog.logs"
-      .event.created = now()
-      .message = .
-      .@timestamp = now()
-
-      # Parse syslog if it contains < and >
-      if is_string(.) {
-          .input_string = string!(.)
-          
-          if contains(.input_string, "<") {
-              if contains(.input_string, ">") {
-                  .parsed, err = parse_syslog(.input_string)
-                  if err == null {
-                      .event.dataset = "syslog.parsed"
-                      
-                      if is_object(.parsed) {
-                          # Extract basic fields
-                          if exists(.parsed.timestamp) {
-                              .@timestamp = .parsed.timestamp
-                          }
-                          if exists(.parsed.hostname) {
-                              .host.name = .parsed.hostname
-                          }
-                          if exists(.parsed.program) {
-                              .service.name = .parsed.program
-                          }
-                          if exists(.parsed.pid) {
-                              .process.pid = .parsed.pid
-                          }
-                          if exists(.parsed.message) {
-                              .message = .parsed.message
-                              .log.original = .parsed.message
-                          }
-                      }
-                  }
-              }
-          }
-      }
-
-      # Set defaults
-      if !exists(."event.kind") {
-          .event.kind = "event"
-      }
-      if !exists(."event.category") {
-          .event.category = ["unknown"]
-      }
-      if !exists(."event.type") {
-          .event.type = ["info"]
-      }
-      if !exists(."event.dataset") {
-          .event.dataset = "syslog.logs"
-      }
-      if !exists(."event.created") {
-          .event.created = now()
-      }
-      if !exists(."@timestamp") {
-          .@timestamp = now()
-      }
-
-      # Add metadata
-      .log.original = .
-      .event.original = .
-      .tags = ["syslog", "parsed"]
-
-      # Compact the output as requested
-      . = compact(., string: true, array: true, object: true, null: true)
+    # Load VRL from external file
+    file: "parser.vrl"
+    # Drop events that fail parsing if you want strict validation
+    drop_on_error: false
+    drop_on_abort: false
+    # Enable to see errors
+    reroute_dropped: true
 
 sinks:
-  stdout_output:
+  # Console output to see validation results
+  console_output:
     type: console
     inputs: ["vrl_parser"]
     encoding:
       codec: json
+    # Show validation status
+    buffer:
+      type: memory
+      max_events: 100
+
+  # File output for persistence
+  file_output:
+    type: file
+    inputs: ["vrl_parser"]
+    path: "vector_output_new/processed-logs-%Y%m%d.json"
+    encoding:
+      codec: json
+    # Show fields that were parsed
+    buffer:
+      type: memory
+      max_events: 500

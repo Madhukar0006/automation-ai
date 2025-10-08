@@ -1,0 +1,25 @@
+{
+  "sources": {
+    "stdin_source": {
+      "type": "stdin"
+    }
+  },
+  "transforms": {
+    "json_parser": {
+      "type": "remap",
+      "inputs": ["stdin_source"],
+      "source": "raw = to_string(.message) ?? to_string(.) ?? \"\"\njson_parsed, json_err = parse_json(raw)\nif json_err == null && is_object(json_parsed) {\n    .event_data = json_parsed\n    \n    # Handle nested Azure structure\n    if exists(json_parsed.azure) {\n        .event_data.azure = json_parsed.azure\n        \n        # Azure signin logs\n        if exists(json_parsed.azure.signinlogs) {\n            azure_signin = json_parsed.azure.signinlogs\n            .event_data.azure_signin = azure_signin\n            \n            # Map Azure fields to ECS\n            if exists(azure_signin.caller_ip_address) {\n                .source.ip = azure_signin.caller_ip_address\n                .event_data.ecs_source_ip = azure_signin.caller_ip_address\n                .event_data.parsed_caller_ip_address = azure_signin.caller_ip_address\n            }\n            \n            if exists(azure_signin.identity) {\n                .user.name = azure_signin.identity\n                .event_data.ecs_user_name = azure_signin.identity\n                .event_data.parsed_identity = azure_signin.identity\n            }\n            \n            if exists(azure_signin.operation_name) {\n                .event.action = downcase(string!(azure_signin.operation_name))\n                .event_data.ecs_event_action = downcase(string!(azure_signin.operation_name))\n                .event_data.parsed_operation_name = azure_signin.operation_name\n            }\n            \n            # Azure properties mapping\n            if exists(azure_signin.properties) {\n                azure_props = azure_signin.properties\n                .event_data.azure_properties = azure_props\n                \n                if exists(azure_props.app_display_name) {\n                    .service.name = azure_props.app_display_name\n                    .event_data.ecs_service_name = azure_props.app_display_name\n                    .event_data.parsed_app_display_name = azure_props.app_display_name\n                }\n                \n                if exists(azure_props.user_display_name) {\n                    .user.name = azure_props.user_display_name\n                    .event_data.ecs_user_name = azure_props.user_display_name\n                    .event_data.parsed_user_display_name = azure_props.user_display_name\n                }\n                \n                if exists(azure_props.user_principal_name) {\n                    .user.name = azure_props.user_principal_name\n                    .event_data.ecs_user_name = azure_props.user_principal_name\n                    .event_data.parsed_user_principal_name = azure_props.user_principal_name\n                }\n            }\n        }\n        \n        # Azure correlation ID\n        if exists(json_parsed.azure.correlation_id) {\n            .session.id = json_parsed.azure.correlation_id\n            .event_data.ecs_session_id = json_parsed.azure.correlation_id\n            .event_data.parsed_correlation_id = json_parsed.azure.correlation_id\n        }\n    }\n    \n    # Event categorization\n    .event.category = [\"authentication\"]\n    .event.type = [\"start\"]\n}\n\n.log.original = raw\n. = compact(., string: true, array: true, object: true, null: true)"
+    }
+  },
+  "sinks": {
+    "stdout_sink": {
+      "type": "console",
+      "inputs": ["json_parser"],
+      "encoding": {
+        "codec": "json"
+      }
+    }
+  }
+}
+
+

@@ -1,0 +1,25 @@
+{
+  "sources": {
+    "stdin_source": {
+      "type": "stdin"
+    }
+  },
+  "transforms": {
+    "json_parser": {
+      "type": "remap",
+      "inputs": ["stdin_source"],
+      "source": "raw = to_string(.message) ?? to_string(.) ?? \"\"\njson_parsed, json_err = parse_json(raw)\nif json_err == null && is_object(json_parsed) {\n    .event_data = json_parsed\n    \n    # ===== TIMESTAMP MAPPING =====\n    if exists(json_parsed.time) { \n        .@timestamp = json_parsed.time\n        .event_data.ecs_timestamp = json_parsed.time\n    }\n    \n    # ===== LOG LEVEL MAPPING =====\n    if exists(json_parsed.Level) { \n        level_num = to_int(json_parsed.Level) ?? 0\n        .event_data.parsed_level_num = level_num\n        .event_data.parsed_level_text = \"info\"\n        if level_num <= 2 { \n            .log.level = \"critical\"\n            .event_data.ecs_log_level = \"critical\"\n            .event_data.parsed_level_text = \"critical\"\n        }\n        if level_num == 3 { \n            .log.level = \"error\"\n            .event_data.ecs_log_level = \"error\"\n            .event_data.parsed_level_text = \"error\"\n        }\n        if level_num == 4 { \n            .log.level = \"warn\"\n            .event_data.ecs_log_level = \"warn\"\n            .event_data.parsed_level_text = \"warn\"\n        }\n        if level_num == 5 { \n            .log.level = \"info\"\n            .event_data.ecs_log_level = \"info\"\n            .event_data.parsed_level_text = \"info\"\n        }\n        if level_num >= 6 { \n            .log.level = \"debug\"\n            .event_data.ecs_log_level = \"debug\"\n            .event_data.parsed_level_text = \"debug\"\n        }\n    }\n    \n    # ===== USER MAPPING =====\n    if exists(json_parsed.identity) { \n        .user.name = json_parsed.identity\n        .event_data.ecs_user_name = json_parsed.identity\n        .event_data.parsed_identity = json_parsed.identity\n    }\n    \n    # ===== SOURCE IP MAPPING =====\n    if exists(json_parsed.callerIpAddress) { \n        .source.ip = json_parsed.callerIpAddress\n        .event_data.ecs_source_ip = json_parsed.callerIpAddress\n        .event_data.parsed_caller_ip_address = json_parsed.callerIpAddress\n    }\n    \n    # ===== ACTION MAPPING =====\n    if exists(json_parsed.operationName) { \n        .event.action = downcase(string!(json_parsed.operationName))\n        .event_data.ecs_event_action = downcase(string!(json_parsed.operationName))\n        .event_data.parsed_operation_name = json_parsed.operationName\n    }\n    \n    # ===== EVENT CATEGORIZATION =====\n    .event.category = [\"authentication\"]\n    .event.type = [\"start\"]\n    .event_data.ecs_event_category = [\"authentication\"]\n    .event_data.ecs_event_type = [\"start\"]\n}\n\n.log.original = raw\n. = compact(., string: true, array: true, object: true, null: true)"
+    }
+  },
+  "sinks": {
+    "stdout_sink": {
+      "type": "console",
+      "inputs": ["json_parser"],
+      "encoding": {
+        "codec": "json"
+      }
+    }
+  }
+}
+
+

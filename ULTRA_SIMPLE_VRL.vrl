@@ -1,0 +1,33 @@
+##################################################
+## VRL Parser - Ultra Simple IPA HTTPD Log
+##################################################
+
+### Parse log message
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+### Very simple pattern - just extract basic fields
+pattern = "<%{POSINT:priority}>%{INT:version} %{TIMESTAMP_ISO8601:timestamp} %{HOSTNAME:hostname} %{WORD:appname} - - - %{GREEDYDATA:rest}"
+
+parsed, err = parse_grok(raw, pattern)
+
+### Error handling
+if err != null {
+  .error = "Parse failed"
+  . = compact(.)
+  return
+}
+
+### Extract basic fields
+if exists(parsed.timestamp) { .@timestamp = parse_timestamp(del(parsed.timestamp), "%Y-%m-%dT%H:%M:%S%.3f%z") ?? now() }
+if exists(parsed.hostname) { .host.name = del(parsed.hostname) }
+if exists(parsed.appname) { .service.name = del(parsed.appname) }
+if exists(parsed.rest) { .message = del(parsed.rest) }
+
+### Set basic ECS fields
+.observer.type = "application"
+.event.category = ["web"]
+.event.kind = "event"
+
+### Final cleanup
+. = compact(.)
+

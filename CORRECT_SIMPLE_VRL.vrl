@@ -1,0 +1,83 @@
+##################################################
+## VRL Parser - IPA HTTPD Error Log (Simple & Correct)
+##################################################
+
+### ECS defaults
+if !exists(.observer.type) { .observer.type = "application" }
+if !exists(.event.dataset) { .event.dataset = "ipa.httpd.error" }
+.event.category = ["web", "authentication"]
+.event.kind = "event"
+.event.type = ["info"]
+
+### Parse log message
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+### Simple GROK pattern - step by step parsing
+pattern = "<%{POSINT:priority}>%{INT:version} %{TIMESTAMP_ISO8601:timestamp} %{HOSTNAME:hostname} %{WORD:appname} - - - %{GREEDYDATA:httpd_part}"
+
+parsed, err = parse_grok(raw, pattern)
+
+### Error handling
+if err != null {
+  .error = "Failed to parse syslog header"
+  .event.outcome = "failure"
+  .log.level = "error"
+  . = compact(.)
+  return
+}
+
+### Parse the HTTPD part separately
+httpd_pattern = "\\[%{HTTPDATE:httpd_time}\\] \\[%{WORD:module}:%{WORD:level}\\] \\[pid %{INT:pid}:tid %{INT:tid}\\] \\[remote %{IP:remote_ip}:%{INT:remote_port}\\] %{WORD:service}: %{WORD:log_level}: \\[%{WORD:session}\\] %{EMAILADDRESS:user}: %{GREEDYDATA:message}"
+
+httpd_parsed, httpd_err = parse_grok(parsed.httpd_part, httpd_pattern)
+
+### Error handling for HTTPD parsing
+if httpd_err != null {
+  .error = "Failed to parse HTTPD part"
+  .event.outcome = "failure"
+  .log.level = "error"
+  . = compact(.)
+  return
+}
+
+### Extract and map fields properly
+### Timestamp
+if exists(parsed.timestamp) { .@timestamp = parse_timestamp(del(parsed.timestamp), "%Y-%m-%dT%H:%M:%S%.3f%z") ?? now() }
+
+### Host information
+if exists(parsed.hostname) { .host.name = del(parsed.hostname) }
+
+### Service information
+if exists(parsed.appname) { .service.name = del(parsed.appname) }
+if exists(httpd_parsed.service) { .service.type = del(httpd_parsed.service) }
+
+### Process information
+if exists(httpd_parsed.pid) { .process.pid = to_int(del(httpd_parsed.pid)) ?? null }
+if exists(httpd_parsed.tid) { .process.thread.id = to_int(del(httpd_parsed.tid)) ?? null }
+
+### Network information
+if exists(httpd_parsed.remote_ip) { .source.ip = del(httpd_parsed.remote_ip) }
+if exists(httpd_parsed.remote_port) { .source.port = to_int(del(httpd_parsed.remote_port)) ?? null }
+
+### User and authentication
+if exists(httpd_parsed.user) { .user.email = del(httpd_parsed.user) }
+if exists(httpd_parsed.session) { .session.id = del(httpd_parsed.session) }
+
+### Log level and message
+if exists(httpd_parsed.log_level) { .log.level = del(httpd_parsed.log_level) }
+if exists(httpd_parsed.message) { .message = del(httpd_parsed.message) }
+
+### Set event outcome based on log level
+if exists(.log.level) {
+  if .log.level == "ERROR" {
+    .event.outcome = "failure"
+  } else if .log.level == "INFO" {
+    .event.outcome = "success"
+  } else {
+    .event.outcome = "unknown"
+  }
+}
+
+### Final cleanup
+. = compact(.)
+

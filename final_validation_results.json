@@ -1,0 +1,35 @@
+{
+  "json": {
+    "success": false,
+    "validation": {
+      "success": false,
+      "returncode": 78,
+      "stdout": "Failed to load [\"/var/folders/dr/k7n_k6wj3lg36lqztmsc604h0000gp/T/tmpvrc1xxep.yaml\"]\n------------------------------------------------------------------------------------\nx could not find expected ':' at line 20 column 1, while scanning a simple key at line 19 column 1\n\n",
+      "stderr": "",
+      "parser_name": "json"
+    },
+    "test": null
+  },
+  "cef": {
+    "success": false,
+    "validation": {
+      "success": false,
+      "returncode": 78,
+      "stdout": "Failed to load [\"/var/folders/dr/k7n_k6wj3lg36lqztmsc604h0000gp/T/tmphgi3ykbg.yaml\"]\n------------------------------------------------------------------------------------\nx could not find expected ':' at line 20 column 1, while scanning a simple key at line 19 column 1\n\n",
+      "stderr": "",
+      "parser_name": "cef"
+    },
+    "test": null
+  },
+  "syslog": {
+    "success": false,
+    "validation": {
+      "success": false,
+      "returncode": 78,
+      "stdout": "Failed to load [\"/var/folders/dr/k7n_k6wj3lg36lqztmsc604h0000gp/T/tmp76_qiqa4.yaml\"]\n------------------------------------------------------------------------------------\nx could not find expected ':' at line 20 column 1, while scanning a simple key at line 19 column 1\n\n",
+      "stderr": "",
+      "parser_name": "syslog"
+    },
+    "test": null
+  }
+}

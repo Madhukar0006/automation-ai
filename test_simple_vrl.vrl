@@ -1,0 +1,23 @@
+### Simple test VRL parser
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+### Simple pattern
+pattern = "<%{POSINT:priority}>%{INT:version} %{TIMESTAMP_ISO8601:timestamp} %{HOSTNAME:hostname} %{WORD:appname} - - - %{GREEDYDATA:message}"
+
+parsed, err = parse_grok(raw, pattern)
+
+### Error handling
+if err != null {
+  .error = "Parse failed"
+  . = compact(.)
+  return
+}
+
+### Field mapping
+if exists(parsed.timestamp) { .@timestamp = parse_timestamp(del(parsed.timestamp), "%Y-%m-%dT%H:%M:%S%.3f%z") ?? now() }
+if exists(parsed.hostname) { .host.name = del(parsed.hostname) }
+if exists(parsed.message) { .message = del(parsed.message) }
+
+### Final cleanup
+. = compact(.)
+

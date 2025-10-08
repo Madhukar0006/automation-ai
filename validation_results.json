@@ -1,0 +1,299 @@
+{
+  "json": {
+    "success": false,
+    "returncode": 1,
+    "stdout": "Attaching to dpm-test-config61\n",
+    "stderr": " Network docker_default  Creating\n Network docker_default  Created\n Container dpm-test-config61  Creating\n Container dpm-test-config61  Created\nGracefully stopping... (press Ctrl+C again to force)\nError response from daemon: Mounts denied: \nThe path /Users/madhukar/Desktop/UI logs/db mssql/parserautomation copy(1)/docker/vector_logs is not shared from the host and is not known to Docker.\nYou can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.\nSee https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.\n",
+    "parsed_output": [
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.054276255Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.055468838Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603087636Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603656719Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588089801Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588804343Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466413133Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466978591Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.156947503Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.157609211Z"
+      },
+      {
+        "event": {
+          "category": [
+            "security"
+          ],
+          "kind": "event",
+          "original": "{\"ts\":1543877987.381899,\"uid\":\"CWWzPB3RjqhFf528c\",\"id.orig_h\":\"192.168.1.10\",\"id.orig_p\":33782,\"id.resp_h\":\"192.168.1.9\",\"id.resp_p\":25,\"trans_depth\":1,\"helo\":\"EXAMPLE.COM\",\"last_reply\":\"220 2.0.0 SMTP server ready\",\"path\":[\"192.168.1.9\"],\"tls\":true,\"fuids\":[],\"is_webmail\":false}"
+        },
+        "file": "/app/input/input.txt",
+        "host": "a7a07c550a38",
+        "log": {
+          "format": "cef"
+        },
+        "observer": {
+          "type": "security"
+        },
+        "source_type": "file",
+        "timestamp": "2025-09-24T12:39:22.930151720Z",
+        "uuid": "0903889f-9381-4989-abd2-8b2eb63bc7f3"
+      }
+    ],
+    "output_count": 11
+  },
+  "cef": {
+    "success": false,
+    "returncode": 1,
+    "stdout": "Attaching to dpm-test-config61\n",
+    "stderr": " Network docker_default  Creating\n Network docker_default  Created\n Container dpm-test-config61  Creating\n Container dpm-test-config61  Created\nGracefully stopping... (press Ctrl+C again to force)\nError response from daemon: Mounts denied: \nThe path /Users/madhukar/Desktop/UI logs/db mssql/parserautomation copy(1)/docker/start-vector.sh is not shared from the host and is not known to Docker.\nYou can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.\nSee https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.\n",
+    "parsed_output": [
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.054276255Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.055468838Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603087636Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603656719Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588089801Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588804343Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466413133Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466978591Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.156947503Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.157609211Z"
+      },
+      {
+        "event": {
+          "category": [
+            "security"
+          ],
+          "kind": "event",
+          "original": "{\"ts\":1543877987.381899,\"uid\":\"CWWzPB3RjqhFf528c\",\"id.orig_h\":\"192.168.1.10\",\"id.orig_p\":33782,\"id.resp_h\":\"192.168.1.9\",\"id.resp_p\":25,\"trans_depth\":1,\"helo\":\"EXAMPLE.COM\",\"last_reply\":\"220 2.0.0 SMTP server ready\",\"path\":[\"192.168.1.9\"],\"tls\":true,\"fuids\":[],\"is_webmail\":false}"
+        },
+        "file": "/app/input/input.txt",
+        "host": "a7a07c550a38",
+        "log": {
+          "format": "cef"
+        },
+        "observer": {
+          "type": "security"
+        },
+        "source_type": "file",
+        "timestamp": "2025-09-24T12:39:22.930151720Z",
+        "uuid": "0903889f-9381-4989-abd2-8b2eb63bc7f3"
+      }
+    ],
+    "output_count": 11
+  },
+  "syslog": {
+    "success": false,
+    "returncode": 1,
+    "stdout": "Attaching to dpm-test-config61\n",
+    "stderr": " Network docker_default  Creating\n Network docker_default  Created\n Container dpm-test-config61  Creating\n Container dpm-test-config61  Created\nGracefully stopping... (press Ctrl+C again to force)\nError response from daemon: Mounts denied: \nThe path /Users/madhukar/Desktop/UI logs/db mssql/parserautomation copy(1)/docker/vector_logs is not shared from the host and is not known to Docker.\nYou can configure shared paths from Docker -> Preferences... -> Resources -> File Sharing.\nSee https://docs.docker.com/desktop/settings/mac/#file-sharing for more info.\n",
+    "parsed_output": [
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.054276255Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:40:22.055468838Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603087636Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T09:42:04.603656719Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588089801Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:15:31.588804343Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466413133Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:22:29.466978591Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.156947503Z"
+      },
+      {
+        "file": "/app/input/input.txt",
+        "host": "3aa588aba393",
+        "message": "hi",
+        "source_type": "file",
+        "timestamp": "2025-09-24T10:26:18.157609211Z"
+      },
+      {
+        "event": {
+          "category": [
+            "security"
+          ],
+          "kind": "event",
+          "original": "{\"ts\":1543877987.381899,\"uid\":\"CWWzPB3RjqhFf528c\",\"id.orig_h\":\"192.168.1.10\",\"id.orig_p\":33782,\"id.resp_h\":\"192.168.1.9\",\"id.resp_p\":25,\"trans_depth\":1,\"helo\":\"EXAMPLE.COM\",\"last_reply\":\"220 2.0.0 SMTP server ready\",\"path\":[\"192.168.1.9\"],\"tls\":true,\"fuids\":[],\"is_webmail\":false}"
+        },
+        "file": "/app/input/input.txt",
+        "host": "a7a07c550a38",
+        "log": {
+          "format": "cef"
+        },
+        "observer": {
+          "type": "security"
+        },
+        "source_type": "file",
+        "timestamp": "2025-09-24T12:39:22.930151720Z",
+        "uuid": "0903889f-9381-4989-abd2-8b2eb63bc7f3"
+      }
+    ],
+    "output_count": 11
+  }
+}

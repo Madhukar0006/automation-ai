@@ -1,0 +1,156 @@
+##################################################
+## RFC5424 Syslog Parser - Complete Field Extraction
+##################################################
+
+#### ECS defaults
+if !exists(.observer.type) { .observer.type = "host" }
+if !exists(.observer.vendor) { .observer.vendor = "syslog" }
+if !exists(.observer.product) { .observer.product = "dirsrv" }
+if !exists(.event.dataset) { .event.dataset = "syslog.logs" }
+.event.category = ["process"]
+.event.type = ["error"]
+.event.kind = "event"
+
+#### Get raw message
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+#### Parse RFC5424 Syslog with GROK
+_grokked, err = parse_groks(raw, [
+  # RFC5424 format: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID STRUCTURED-DATA MSG
+  "<%{NONNEGINT:syslog_priority}>%{NONNEGINT:syslog_version} %{TIMESTAMP_ISO8601:syslog_timestamp} %{HOSTNAME:syslog_hostname} %{NOTSPACE:syslog_appname} %{NOTSPACE:syslog_procid} %{NOTSPACE:syslog_msgid} %{NOTSPACE:syslog_structdata} %{GREEDYDATA:syslog_message}",
+  # Fallback
+  "%{GREEDYDATA:unparsed}"
+])
+
+if err == null { . = merge(., _grokked, deep: true) }
+
+#### Extract priority components
+if exists(.syslog_priority) {
+  priority = to_int(.syslog_priority) ?? 0
+  
+  # Calculate facility and severity
+  .log.syslog.facility.code = floor(priority / 8)
+  .log.syslog.severity.code = mod(priority, 8)
+  
+  # Map severity to log level
+  severity = .log.syslog.severity.code
+  if severity == 0 { .log.level = "emergency" }
+  if severity == 1 { .log.level = "alert" }
+  if severity == 2 { .log.level = "critical" }
+  if severity == 3 { .log.level = "error" }
+  if severity == 4 { .log.level = "warning" }
+  if severity == 5 { .log.level = "notice" }
+  if severity == 6 { .log.level = "informational" }
+  if severity == 7 { .log.level = "debug" }
+  
+  del(.syslog_priority)
+}
+
+#### Parse timestamp
+if exists(.syslog_timestamp) {
+  .@timestamp = parse_timestamp!(.syslog_timestamp, "%Y-%m-%dT%H:%M:%S%.f%:z") ?? parse_timestamp!(.syslog_timestamp, "%Y-%m-%dT%H:%M:%S%:z") ?? now()
+  del(.syslog_timestamp)
+}
+
+#### Extract hostname
+if exists(.syslog_hostname) {
+  .host.hostname = del(.syslog_hostname)
+  .host.name = .host.hostname
+}
+
+#### Extract application name
+if exists(.syslog_appname) && .syslog_appname != "-" {
+  .service.name = del(.syslog_appname)
+  .process.name = .service.name
+}
+
+#### Extract process ID
+if exists(.syslog_procid) && .syslog_procid != "-" {
+  .process.pid = to_int!(.syslog_procid) ?? null
+  del(.syslog_procid)
+}
+
+#### Extract message ID
+if exists(.syslog_msgid) && .syslog_msgid != "-" {
+  .event.code = del(.syslog_msgid)
+}
+
+#### Parse the message content for additional fields
+if exists(.syslog_message) {
+  msg = .syslog_message
+  
+  # Parse message with GROK to extract more fields
+  _msg_parsed, msg_err = parse_groks(msg, [
+    # Pattern: [timestamp] - LEVEL - function - [file, line]: message
+    "\\[%{DATA:log_timestamp}\\] - %{WORD:log_level} - %{NOTSPACE:function_name} - \\[file %{NOTSPACE:source_file}, line %{NUMBER:source_line}\\]: %{GREEDYDATA:error_message}",
+    # Fallback
+    "%{GREEDYDATA:message_text}"
+  ])
+  
+  if msg_err == null { . = merge(., _msg_parsed, deep: true) }
+  
+  # Set message to parsed error message or original
+  if exists(.error_message) {
+    .message = del(.error_message)
+  } else if exists(.message_text) {
+    .message = del(.message_text)
+  } else {
+    .message = msg
+  }
+  
+  # Map log level from message
+  if exists(.log_level) && !exists(.log.level) {
+    .log.level = downcase!(.log_level) ?? null
+    del(.log_level)
+  }
+  
+  # Add source code location
+  if exists(.source_file) {
+    .log.origin.file.name = del(.source_file)
+  }
+  if exists(.source_line) {
+    .log.origin.file.line = to_int!(del(.source_line)) ?? null
+  }
+  
+  # Add function name
+  if exists(.function_name) {
+    .log.origin.function = del(.function_name)
+  }
+  
+  del(.syslog_message)
+}
+
+#### Parse log timestamp from message
+if exists(.log_timestamp) {
+  .event.created = parse_timestamp!(.log_timestamp, "%d/%b/%Y:%H:%M:%S%.f %z") ?? null
+  del(.log_timestamp)
+}
+
+#### Set event outcome based on log level
+if exists(.log.level) {
+  level = .log.level
+  if level == "error" || level == "err" || level == "critical" || level == "alert" || level == "emergency" {
+    .event.outcome = "failure"
+  } else {
+    .event.outcome = "success"
+  }
+}
+
+#### Clean up syslog version and structured data
+if exists(.syslog_version) { del(.syslog_version) }
+if exists(.syslog_structdata) { del(.syslog_structdata) }
+
+#### Set original log
+.event.original = raw
+
+#### Related entities
+.related.hosts = []
+if exists(.host.hostname) { .related.hosts = push(.related.hosts, .host.hostname) }
+.related.hosts = unique(flatten(.related.hosts))
+
+#### Timestamp defaults
+if !exists(.@timestamp) { .@timestamp = now() }
+if !exists(.event.created) { .event.created = now() }
+
+#### Compact final object
+. = compact(., string: true, array: true, object: true, null: true)

@@ -1,0 +1,25 @@
+{
+  "sources": {
+    "stdin_source": {
+      "type": "stdin"
+    }
+  },
+  "transforms": {
+    "json_parser": {
+      "type": "remap",
+      "inputs": ["stdin_source"],
+      "source": "raw = to_string(.message) ?? to_string(.) ?? \"\"\njson_parsed, json_err = parse_json(raw)\nif json_err == null && is_object(json_parsed) {\n    .event_data = json_parsed\n    \n    # Create renamed fields in event_data for common variations\n    if exists(json_parsed.Level) { \n        level_num = to_int(json_parsed.Level) ?? 0\n        .event_data.parsed_level_num = level_num\n        .event_data.parsed_level_text = \"info\"\n        if level_num <= 2 { .event_data.parsed_level_text = \"critical\" }\n        if level_num == 3 { .event_data.parsed_level_text = \"error\" }\n        if level_num == 4 { .event_data.parsed_level_text = \"warn\" }\n        if level_num == 5 { .event_data.parsed_level_text = \"info\" }\n        if level_num >= 6 { .event_data.parsed_level_text = \"debug\" }\n    }\n    \n    if exists(json_parsed.callerIpAddress) { .event_data.parsed_caller_ip_address = json_parsed.callerIpAddress }\n    if exists(json_parsed.operationName) { .event_data.parsed_operation_name = json_parsed.operationName }\n    if exists(json_parsed.identity) { .event_data.parsed_identity = json_parsed.identity }\n    if exists(json_parsed.time) { .event_data.parsed_time = json_parsed.time }\n    \n    if exists(json_parsed.time) { .@timestamp = json_parsed.time }\n}\n.log.original = raw"
+    }
+  },
+  "sinks": {
+    "stdout_sink": {
+      "type": "console",
+      "inputs": ["json_parser"],
+      "encoding": {
+        "codec": "json"
+      }
+    }
+  }
+}
+
+

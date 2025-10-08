@@ -1,0 +1,286 @@
+{
+  "vrl_correct_functions": {
+    "timestamp_functions": {
+      "parse_timestamp": {
+        "description": "Parse a timestamp string into a timestamp object",
+        "signature": "parse_timestamp(value: string, format: string) -> Result<timestamp, string>",
+        "infallible_version": "parse_timestamp!(value: string, format: string) -> timestamp",
+        "examples": [
+          "parsed_ts, err = parse_timestamp(.timestamp, \"%Y-%m-%d %H:%M:%S\")",
+          ".@timestamp = parse_timestamp!(.timestamp, \"%Y-%m-%dT%H:%M:%S%.fZ\") ?? now()",
+          "if exists(.time) { .@timestamp = parse_timestamp!(.time, \"%Y-%m-%dT%H:%M:%S\") ?? now() }"
+        ],
+        "common_formats": {
+          "iso8601": "%Y-%m-%dT%H:%M:%S%.fZ",
+          "iso8601_no_millis": "%Y-%m-%dT%H:%M:%SZ",
+          "standard": "%Y-%m-%d %H:%M:%S",
+          "syslog": "%b %d %H:%M:%S",
+          "apache": "%d/%b/%Y:%H:%M:%S %z"
+        },
+        "notes": "Use parse_timestamp!() with ?? now() fallback for safe parsing"
+      },
+      "format_timestamp": {
+        "description": "Format a timestamp object into a string",
+        "signature": "format_timestamp(value: timestamp, format: string) -> Result<string, string>",
+        "infallible_version": "format_timestamp!(value: timestamp, format: string) -> string",
+        "examples": [
+          ".formatted_time = format_timestamp!(.@timestamp, \"%Y-%m-%d %H:%M:%S\")",
+          ".event.created = format_timestamp!(now(), \"%FT%TZ\")"
+        ]
+      },
+      "to_timestamp": {
+        "description": "Convert various types to timestamp",
+        "signature": "to_timestamp(value) -> Result<timestamp, string>",
+        "infallible_version": "to_timestamp!(value) -> timestamp",
+        "examples": [
+          ".@timestamp = to_timestamp!(.unix_timestamp)",
+          ".@timestamp = to_timestamp!(.timestamp_millis)"
+        ],
+        "notes": "Use for Unix timestamps (integers), NOT for parsing timestamp strings. For strings, use parse_timestamp() instead."
+      },
+      "now": {
+        "description": "Get current timestamp",
+        "signature": "now() -> timestamp",
+        "examples": [
+          ".@timestamp = now()",
+          ".event.created = now()"
+        ]
+      }
+    },
+    "NEVER_USE": {
+      "to_timestamp!_on_strings": {
+        "wrong": "to_timestamp!(.timestamp)",
+        "correct": "parse_timestamp!(.timestamp, \"%Y-%m-%dT%H:%M:%S%.fZ\") ?? now()",
+        "error_message": "undefined function",
+        "explanation": "to_timestamp!() does NOT work on timestamp strings. Use parse_timestamp!() for strings."
+      }
+    },
+    "parsing_functions": {
+      "parse_json": {
+        "description": "Parse JSON string",
+        "signature": "parse_json(value: string) -> Result<object, string>",
+        "infallible_version": "parse_json!(value: string) -> object",
+        "examples": [
+          "parsed, err = parse_json(.message)",
+          "json_data = parse_json!(.raw_json) ?? {}"
+        ]
+      },
+      "parse_grok": {
+        "description": "Parse using single GROK pattern",
+        "signature": "parse_grok(value: string, pattern: string) -> Result<object, string>",
+        "infallible_version": "parse_grok!(value: string, pattern: string) -> object",
+        "examples": [
+          "parsed, err = parse_grok(.message, \"%{SYSLOGLINE}\")",
+          "_grokked = parse_grok!(.event.original, \"%{COMMONAPACHELOG}\") ?? {}"
+        ]
+      },
+      "parse_groks": {
+        "description": "Parse using multiple GROK patterns (tries each until one succeeds)",
+        "signature": "parse_groks(value: string, patterns: array) -> Result<object, string>",
+        "infallible_version": "parse_groks!(value: string, patterns: array) -> object",
+        "examples": [
+          "_grokked, err = parse_groks(.event.original, [\"%{SYSLOGLINE}\", \"%{COMMONAPACHELOG}\", \"%{GREEDYDATA:unparsed}\"])",
+          "_parsed = parse_groks!(.message, [\"pattern1\", \"pattern2\", \"%{GREEDYDATA:raw}\"]) ?? {}"
+        ],
+        "best_practice": "Always include \"%{GREEDYDATA:unparsed}\" as last fallback pattern"
+      },
+      "parse_key_value": {
+        "description": "Parse key=value pairs",
+        "signature": "parse_key_value(value: string) -> Result<object, string>",
+        "infallible_version": "parse_key_value!(value: string) -> object",
+        "examples": [
+          "kv_data, err = parse_key_value(.message)",
+          "_kv = parse_key_value!(.kv_string, key_value_delimiter: \"=\", field_delimiter: \" \") ?? {}"
+        ]
+      },
+      "parse_syslog": {
+        "description": "Parse syslog format",
+        "signature": "parse_syslog(value: string) -> Result<object, string>",
+        "infallible_version": "parse_syslog!(value: string) -> object",
+        "examples": [
+          "syslog, err = parse_syslog(.message)",
+          "_syslog = parse_syslog!(.event.original) ?? {}"
+        ]
+      },
+      "parse_cef": {
+        "description": "Parse Common Event Format (CEF)",
+        "signature": "parse_cef(value: string) -> Result<object, string>",
+        "infallible_version": "parse_cef!(value: string) -> object",
+        "examples": [
+          "cef, err = parse_cef(.message)",
+          "_cef = parse_cef!(.event.original) ?? {}"
+        ]
+      }
+    },
+    "type_coercion": {
+      "to_string": {
+        "signature": "to_string(value) -> Result<string, string>",
+        "infallible_version": "to_string!(value) -> string",
+        "examples": [
+          "raw = to_string(.message) ?? to_string(.) ?? \"\"",
+          ".message = to_string!(.raw)"
+        ]
+      },
+      "to_int": {
+        "signature": "to_int(value) -> Result<integer, string>",
+        "infallible_version": "to_int!(value) -> integer",
+        "examples": [
+          ".port = to_int!(parsed.port) ?? null",
+          "if exists(.port) { .destination.port = to_int!(.port) ?? null }"
+        ]
+      },
+      "to_float": {
+        "signature": "to_float(value) -> Result<float, string>",
+        "infallible_version": "to_float!(value) -> float",
+        "examples": [
+          ".response_time = to_float!(.duration) ?? 0.0"
+        ]
+      },
+      "to_bool": {
+        "signature": "to_bool(value) -> Result<boolean, string>",
+        "infallible_version": "to_bool!(value) -> boolean",
+        "examples": [
+          ".is_enabled = to_bool!(.enabled) ?? false"
+        ]
+      }
+    },
+    "string_functions": {
+      "upcase": {
+        "description": "Convert to uppercase",
+        "signature": "upcase(value: string) -> string",
+        "examples": [".uppercase = upcase(.text)"]
+      },
+      "downcase": {
+        "description": "Convert to lowercase",
+        "signature": "downcase(value: string) -> string",
+        "examples": [".event.action = downcase(.action)"]
+      },
+      "strip_whitespace": {
+        "description": "Remove leading/trailing whitespace",
+        "signature": "strip_whitespace(value: string) -> string",
+        "examples": [".trimmed = strip_whitespace(.message)"]
+      },
+      "split": {
+        "description": "Split string into array",
+        "signature": "split(value: string, separator: string) -> array",
+        "examples": [".parts = split(.message, \",\")"]
+      },
+      "replace": {
+        "description": "Replace substring",
+        "signature": "replace(value: string, pattern: string, replacement: string) -> string",
+        "examples": [".cleaned = replace(.message, \"ERROR:\", \"\")"]
+      }
+    },
+    "object_functions": {
+      "exists": {
+        "description": "Check if field exists",
+        "signature": "exists(path) -> boolean",
+        "examples": [
+          "if exists(.field) { .target = del(.field) }",
+          "if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }"
+        ],
+        "best_practice": "Always check exists() before accessing fields"
+      },
+      "del": {
+        "description": "Delete field and return its value",
+        "signature": "del(path) -> any",
+        "examples": [
+          "if exists(.old_field) { .new_field = del(.old_field) }",
+          ".user.name = del(.username)"
+        ]
+      },
+      "merge": {
+        "description": "Merge objects",
+        "signature": "merge(target: object, source: object, deep: boolean) -> object",
+        "examples": [
+          ". = merge(., _grokked, deep: true)",
+          ". = merge(., _parsed, deep: false)"
+        ]
+      },
+      "compact": {
+        "description": "Remove null/empty values",
+        "signature": "compact(value: object) -> object",
+        "examples": [
+          ". = compact(., string: true, array: true, object: true, null: true)",
+          ". = compact(.)"
+        ],
+        "best_practice": "Always use compact() as last step to clean output"
+      },
+      "is_object": {
+        "description": "Check if value is an object",
+        "signature": "is_object(value) -> boolean",
+        "examples": [
+          "if is_object(parsed) { . = merge(., parsed) }"
+        ]
+      },
+      "is_array": {
+        "description": "Check if value is an array",
+        "signature": "is_array(value) -> boolean",
+        "examples": [
+          "if is_array(.items) { .count = length(.items) }"
+        ]
+      }
+    },
+    "array_functions": {
+      "push": {
+        "description": "Add element to array",
+        "signature": "push(array: array, value: any) -> array",
+        "examples": [
+          ".related.ip = push(.related.ip, .source.ip)",
+          ".tags = push(.tags, \"parsed\")"
+        ]
+      },
+      "unique": {
+        "description": "Remove duplicates from array",
+        "signature": "unique(array: array) -> array",
+        "examples": [
+          ".related.ip = unique(flatten(.related.ip))",
+          ".tags = unique(.tags)"
+        ]
+      },
+      "flatten": {
+        "description": "Flatten nested arrays",
+        "signature": "flatten(array: array) -> array",
+        "examples": [
+          ".ips = flatten(.nested_ips)"
+        ]
+      },
+      "length": {
+        "description": "Get array/string length",
+        "signature": "length(value) -> integer",
+        "examples": [
+          ".count = length(.items)",
+          ".message_length = length(.message)"
+        ]
+      }
+    },
+    "best_practices": {
+      "error_handling": {
+        "pattern": "fallible_function, err = fallible_function(args)",
+        "safe_pattern": "value = fallible_function!(args) ?? default_value",
+        "examples": [
+          "parsed, err = parse_json(.message); if err == null { ... }",
+          ".@timestamp = parse_timestamp!(.ts, \"%Y-%m-%d\") ?? now()"
+        ]
+      },
+      "field_renaming": {
+        "correct": "if exists(.old_field) { .new_field = del(.old_field) }",
+        "avoid": ".new_field = .old_field; del(.old_field)",
+        "explanation": "Use exists() check with del() in one operation"
+      },
+      "timestamp_parsing": {
+        "correct": ".@timestamp = parse_timestamp!(.timestamp, \"%Y-%m-%dT%H:%M:%S%.fZ\") ?? now()",
+        "wrong": ".@timestamp = to_timestamp!(.timestamp)",
+        "explanation": "Use parse_timestamp!() for strings, to_timestamp!() for Unix timestamps only"
+      },
+      "safe_parsing": {
+        "pattern": "raw = to_string(.message) ?? to_string(.) ?? \"\"",
+        "explanation": "Chain fallbacks with ?? operator for safety"
+      },
+      "grok_patterns": {
+        "pattern": "_grokked, err = parse_groks(.event.original, [\"pattern1\", \"pattern2\", \"%{GREEDYDATA:unparsed}\"])",
+        "explanation": "Always include GREEDYDATA as last fallback"
+      }
+    }
+  }
+}

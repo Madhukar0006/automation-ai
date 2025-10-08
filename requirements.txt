@@ -1,14 +1,43 @@
+# Web UI Framework
 streamlit>=1.28.0
-pandas>=2.0.0
-openpyxl>=3.1.0
-chromadb>=0.4.0
-sentence-transformers>=2.2.0
-ollama>=0.1.0
-jsonschema>=4.0.0
+
+# AI/ML and LLM Integration
 langchain>=0.1.0
 langchain-community>=0.0.20
-fastapi>=0.100.0
-uvicorn>=0.23.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
+langchain-core>=0.1.0
+openai>=1.0.0
 
+# Vector Database
+chromadb>=0.4.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# HTTP Requests
+requests>=2.31.0
+
+# JSON/YAML Processing
+pyyaml>=6.0
+
+# Sentence Transformers for Embeddings
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch>=2.0.0
+
+# Vector Similarity
+faiss-cpu>=1.7.0
+
+# Additional Utilities
+pathlib2>=2.3.0
+typing-extensions>=4.5.0
+
+# Development and Testing
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Note: Ollama needs to be installed separately
+# Install from: https://ollama.ai/download
+# Then run: ollama pull llama3.2:latest
+# Then run: ollama pull phi3:mini

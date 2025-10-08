@@ -1,0 +1,359 @@
+
+##################################################
+## Comprehensive Log Parser - Inline GROK Patterns
+##################################################
+
+### ECS defaults
+.event.kind = "event"
+.event.category = ["network", "system"]
+.event.type = ["info"]
+.observer.type = "network"
+
+##################################################
+### Extract raw message
+##################################################
+raw = ""
+if exists(.message.message) {
+    raw = to_string!(.message.message)
+}
+if raw == "" && exists(.message) {
+    raw = to_string!(.message)
+}
+if raw == "" {
+    raw = to_string(.) ?? ""
+}
+
+##################################################
+### INLINE GROK PATTERNS - ALL PATTERNS AT ONCE
+##################################################
+
+# GROK Pattern 1: CEF Log Detection and Parsing
+cef_data, cef_err = parse_grok(raw, "CEF:%{NUMBER:cef_version}\|%{DATA:vendor}\|%{DATA:product}\|%{DATA:version}\|%{DATA:signature_id}\|%{DATA:event_name}\|%{NUMBER:severity}\|%{GREEDYDATA:extensions}")
+
+# GROK Pattern 2: Syslog RFC5424
+syslog5424, syslog5424_err = parse_grok(raw, "^<%{INT:priority}>%{INT:version} %{TIMESTAMP_ISO8601:timestamp} %{IPORHOST:hostname} %{DATA:program} %{INT:pid} %{DATA:msgid} %{GREEDYDATA:message}")
+
+# GROK Pattern 3: Syslog RFC3164
+syslog3164, syslog3164_err = parse_grok(raw, "^<%{INT:priority}>%{SYSLOGTIMESTAMP:timestamp} %{IPORHOST:hostname} %{DATA:program}(?:\[%{INT:pid}\])?: %{GREEDYDATA:message}")
+
+# GROK Pattern 4: JSON Log Detection
+json_data, json_err = parse_json(raw)
+
+# GROK Pattern 5: IP Address Extraction
+ip_match, ip_err = parse_grok(raw, "%{IP:source_ip}")
+
+# GROK Pattern 6: Port Number Extraction
+port_match, port_err = parse_grok(raw, "port %{INT:port}")
+
+# GROK Pattern 7: Username Extraction
+user_match, user_err = parse_grok(raw, "user %{USERNAME:username}")
+
+# GROK Pattern 8: HTTP Status Code Extraction
+status_match, status_err = parse_grok(raw, "status %{INT:status_code}")
+
+# GROK Pattern 9: HTTP Method Extraction
+method_match, method_err = parse_grok(raw, "method %{WORD:http_method}")
+
+# GROK Pattern 10: URL Extraction
+url_match, url_err = parse_grok(raw, "url %{DATA:request_url}")
+
+# GROK Pattern 11: Timestamp Extraction (ISO8601)
+timestamp_match, timestamp_err = parse_grok(raw, "%{TIMESTAMP_ISO8601:timestamp}")
+
+# GROK Pattern 12: File Path Extraction
+path_match, path_err = parse_grok(raw, "%{UNIXPATH:file_path}")
+
+# GROK Pattern 13: Key-Value Pair Extraction
+kv_data, kv_err = parse_key_value(raw, key_value_delimiter: "=", field_delimiter: " ")
+
+##################################################
+### LOGIC - DETERMINE LOG TYPE AND PROCESS
+##################################################
+
+# Logic 1: CEF Log Processing
+if cef_err == null {
+    .log.source = "cef"
+    .event.dataset = "cef.logs"
+    
+    # Map CEF header fields
+    .observer.vendor = cef_data.vendor
+    .observer.product = cef_data.product
+    .observer.version = cef_data.version
+    .event.code = cef_data.signature_id
+    .event.action = cef_data.event_name
+    
+    # Map severity to log level
+    sev = to_int(cef_data.severity) ?? 0
+    .event.severity = sev
+    
+    if sev >= 0 && sev <= 3 { .log.level = "low" }
+    if sev >= 4 && sev <= 6 { .log.level = "medium" }
+    if sev >= 7 && sev <= 8 { .log.level = "high" }
+    if sev >= 9 { .log.level = "critical" }
+    
+    # Parse CEF extensions
+    extensions = cef_data.extensions ?? ""
+    cef_extensions, ext_err = parse_key_value(extensions, key_value_delimiter: "=", field_delimiter: " ")
+    
+    if ext_err == null {
+        # Map CEF extension fields
+        if exists(cef_extensions.src) { .source.ip = cef_extensions.src }
+        if exists(cef_extensions.dst) { .destination.ip = cef_extensions.dst }
+        if exists(cef_extensions.spt) { .source.port = to_int(cef_extensions.spt) ?? null }
+        if exists(cef_extensions.dpt) { .destination.port = to_int(cef_extensions.dpt) ?? null }
+        if exists(cef_extensions.proto) { .network.protocol = downcase(string!(cef_extensions.proto)) }
+        if exists(cef_extensions.suser) { .source.user.name = cef_extensions.suser }
+        if exists(cef_extensions.duser) { .destination.user.name = cef_extensions.duser }
+        if exists(cef_extensions.cs1) { .user.name = cef_extensions.cs1 }
+        if exists(cef_extensions.cs2) { .user.id = cef_extensions.cs2 }
+        if exists(cef_extensions.act) { .event.action = cef_extensions.act }
+        if exists(cef_extensions.outcome) { .event.outcome = downcase(string!(cef_extensions.outcome)) }
+        if exists(cef_extensions.app) { .service.name = cef_extensions.app }
+        if exists(cef_extensions.fname) { .file.name = cef_extensions.fname }
+        if exists(cef_extensions.fsize) { .file.size = to_int(cef_extensions.fsize) ?? null }
+        if exists(cef_extensions.msg) { .message = cef_extensions.msg }
+    }
+}
+
+# Logic 2: Syslog RFC5424 Processing
+if syslog5424_err == null && cef_err != null {
+    .log.source = "syslog_rfc5424"
+    .event.dataset = "syslog.logs"
+    
+    .@timestamp = syslog5424.timestamp
+    .host.name = syslog5424.hostname
+    .service.name = syslog5424.program
+    .process.pid = to_int(syslog5424.pid) ?? null
+    .log.syslog.msgid = syslog5424.msgid
+    .message = syslog5424.message
+    .log.syslog.facility = to_int(syslog5424.priority) ?? 0
+}
+
+# Logic 3: Syslog RFC3164 Processing
+if syslog3164_err == null && cef_err != null && syslog5424_err != null {
+    .log.source = "syslog_rfc3164"
+    .event.dataset = "syslog.logs"
+    
+    .@timestamp = syslog3164.timestamp
+    .host.name = syslog3164.hostname
+    .service.name = syslog3164.program
+    .process.pid = to_int(syslog3164.pid) ?? null
+    .message = syslog3164.message
+    .log.syslog.facility = to_int(syslog3164.priority) ?? 0
+}
+
+# Logic 4: JSON Log Processing
+if json_err == null && cef_err != null && syslog5424_err != null && syslog3164_err != null {
+    .log.source = "json"
+    .event.dataset = "json.logs"
+    
+    # Map JSON fields
+    if exists(json_data.timestamp) { .@timestamp = json_data.timestamp }
+    if exists(json_data.time) { .@timestamp = json_data.time }
+    if exists(json_data.date) { .@timestamp = json_data.date }
+    if exists(json_data.datetime) { .@timestamp = json_data.datetime }
+    if exists(json_data.level) { .log.level = json_data.level }
+    if exists(json_data.severity) { .log.level = json_data.severity }
+    if exists(json_data.priority) { .log.level = json_data.priority }
+    if exists(json_data.message) { .message = json_data.message }
+    if exists(json_data.msg) { .message = json_data.msg }
+    if exists(json_data.text) { .message = json_data.text }
+    if exists(json_data.host) { .host.name = json_data.host }
+    if exists(json_data.hostname) { .host.name = json_data.hostname }
+    if exists(json_data.server) { .host.name = json_data.server }
+    if exists(json_data.service) { .service.name = json_data.service }
+    if exists(json_data.app) { .service.name = json_data.app }
+    if exists(json_data.application) { .service.name = json_data.application }
+    if exists(json_data.pid) { .process.pid = to_int(json_data.pid) ?? null }
+    if exists(json_data.process_id) { .process.pid = to_int(json_data.process_id) ?? null }
+    if exists(json_data.user) { .user.name = json_data.user }
+    if exists(json_data.username) { .user.name = json_data.username }
+    if exists(json_data.ip) { .source.ip = json_data.ip }
+    if exists(json_data.client_ip) { .source.ip = json_data.client_ip }
+    if exists(json_data.remote_ip) { .source.ip = json_data.remote_ip }
+    if exists(json_data.dest_ip) { .destination.ip = json_data.dest_ip }
+    if exists(json_data.port) { .destination.port = to_int(json_data.port) ?? null }
+    if exists(json_data.method) { .http.request.method = json_data.method }
+    if exists(json_data.url) { .url.full = json_data.url }
+    if exists(json_data.uri) { .url.full = json_data.uri }
+    if exists(json_data.path) { .url.path = json_data.path }
+    if exists(json_data.status) { 
+        status_code = to_int(json_data.status) ?? 0
+        .http.response.status_code = status_code
+        if status_code >= 200 && status_code < 300 { .event.outcome = "success" }
+        if status_code >= 400 { .event.outcome = "failure" }
+    }
+    if exists(json_data.status_code) { 
+        status_code = to_int(json_data.status_code) ?? 0
+        .http.response.status_code = status_code
+        if status_code >= 200 && status_code < 300 { .event.outcome = "success" }
+        if status_code >= 400 { .event.outcome = "failure" }
+    }
+    if exists(json_data.error) { .error.message = json_data.error }
+    if exists(json_data.exception) { .error.message = json_data.exception }
+    if exists(json_data.action) { .event.action = json_data.action }
+    if exists(json_data.event) { .event.action = json_data.event }
+    if exists(json_data.operation) { .event.action = json_data.operation }
+    if exists(json_data.file) { .file.name = json_data.file }
+    if exists(json_data.filename) { .file.name = json_data.filename }
+    if exists(json_data.file_path) { .file.path = json_data.file_path }
+}
+
+# Logic 5: Key-Value Processing (fallback)
+if kv_err == null && cef_err != null && syslog5424_err != null && syslog3164_err != null && json_err != null {
+    .log.source = "keyvalue"
+    .event.dataset = "keyvalue.logs"
+    
+    # Map key-value fields
+    if exists(kv_data.timestamp) { .@timestamp = kv_data.timestamp }
+    if exists(kv_data.time) { .@timestamp = kv_data.time }
+    if exists(kv_data.date) { .@timestamp = kv_data.date }
+    if exists(kv_data.level) { .log.level = kv_data.level }
+    if exists(kv_data.severity) { .log.level = kv_data.severity }
+    if exists(kv_data.message) { .message = kv_data.message }
+    if exists(kv_data.msg) { .message = kv_data.msg }
+    if exists(kv_data.host) { .host.name = kv_data.host }
+    if exists(kv_data.hostname) { .host.name = kv_data.hostname }
+    if exists(kv_data.service) { .service.name = kv_data.service }
+    if exists(kv_data.app) { .service.name = kv_data.app }
+    if exists(kv_data.user) { .user.name = kv_data.user }
+    if exists(kv_data.username) { .user.name = kv_data.username }
+    if exists(kv_data.client_ip) { .client.ip = kv_data.client_ip }
+    if exists(kv_data.source_ip) { .source.ip = kv_data.source_ip }
+    if exists(kv_data.dest_ip) { .destination.ip = kv_data.dest_ip }
+    if exists(kv_data.method) { .http.request.method = kv_data.method }
+    if exists(kv_data.url) { .url.full = kv_data.url }
+    if exists(kv_data.path) { .url.path = kv_data.path }
+    if exists(kv_data.status) { 
+        status_code = to_int(kv_data.status) ?? 0
+        .http.response.status_code = status_code
+        if status_code >= 200 && status_code < 300 { .event.outcome = "success" }
+        if status_code >= 400 { .event.outcome = "failure" }
+    }
+    if exists(kv_data.action) { .event.action = kv_data.action }
+}
+
+##################################################
+### ADDITIONAL FIELD EXTRACTION FROM GROK PATTERNS
+##################################################
+
+# Extract IP addresses if not already set
+if !exists(.source.ip) && ip_err == null && exists(ip_match.source_ip) {
+    .source.ip = ip_match.source_ip
+}
+
+# Extract port numbers if not already set
+if !exists(.source.port) && port_err == null && exists(port_match.port) {
+    .source.port = to_int(port_match.port) ?? null
+}
+
+# Extract usernames if not already set
+if !exists(.user.name) && user_err == null && exists(user_match.username) {
+    .user.name = user_match.username
+}
+
+# Extract HTTP status codes if not already set
+if !exists(.http.response.status_code) && status_err == null && exists(status_match.status_code) {
+    status_code = to_int(status_match.status_code) ?? 0
+    .http.response.status_code = status_code
+    if status_code >= 200 && status_code < 300 { .event.outcome = "success" }
+    if status_code >= 400 { .event.outcome = "failure" }
+}
+
+# Extract HTTP methods if not already set
+if !exists(.http.request.method) && method_err == null && exists(method_match.http_method) {
+    .http.request.method = upcase(method_match.http_method)
+}
+
+# Extract URLs if not already set
+if !exists(.url.full) && url_err == null && exists(url_match.request_url) {
+    .url.full = url_match.request_url
+    .http.request.url = url_match.request_url
+}
+
+# Extract timestamps if not already set
+if !exists(.@timestamp) && timestamp_err == null && exists(timestamp_match.timestamp) {
+    .@timestamp = timestamp_match.timestamp
+}
+
+# Extract file paths if not already set
+if !exists(.file.path) && path_err == null && exists(path_match.file_path) {
+    .file.path = path_match.file_path
+}
+
+##################################################
+### RENAMING - STANDARDIZE FIELD NAMES
+##################################################
+
+# Rename common field variations to standard names
+if exists(.log.source) {
+    .event.dataset = .log.source + ".logs"
+}
+
+# Rename log levels to standard format
+if exists(.log.level) {
+    level = downcase(string!(.log.level))
+    if level == "error" || level == "err" { .log.level = "error" }
+    if level == "warning" || level == "warn" { .log.level = "warning" }
+    if level == "info" || level == "information" { .log.level = "info" }
+    if level == "debug" || level == "dbg" { .log.level = "debug" }
+    if level == "critical" || level == "crit" { .log.level = "critical" }
+    if level == "fatal" { .log.level = "critical" }
+}
+
+# Rename protocol names to lowercase
+if exists(.network.protocol) {
+    .network.protocol = downcase(string!(.network.protocol))
+}
+
+# Rename HTTP methods to uppercase
+if exists(.http.request.method) {
+    .http.request.method = upcase(string!(.http.request.method))
+}
+
+# Rename event outcomes to lowercase
+if exists(.event.outcome) {
+    .event.outcome = downcase(string!(.event.outcome))
+}
+
+##################################################
+### CLEANING - REMOVE UNNECESSARY FIELDS
+##################################################
+
+# Remove empty fields
+. = compact(., string: true, array: true, object: true, null: true)
+
+# Remove nested message structures
+del(.message.message)
+
+# Remove temporary fields
+del(.log.source)
+
+# Clean up empty arrays
+if exists(.related.ip) && length(.related.ip) == 0 { del(.related.ip) }
+if exists(.related.user) && length(.related.user) == 0 { del(.related.user) }
+
+##################################################
+### FINAL RELATED ENTITIES
+##################################################
+.related.ip = []
+.related.user = []
+
+if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }
+if exists(.destination.ip) { .related.ip = push(.related.ip, .destination.ip) }
+if exists(.client.ip) { .related.ip = push(.related.ip, .client.ip) }
+if exists(.user.name) { .related.user = push(.related.user, .user.name) }
+if exists(.source.user.name) { .related.user = push(.related.user, .source.user.name) }
+if exists(.destination.user.name) { .related.user = push(.related.user, .destination.user.name) }
+
+.related.ip = unique(flatten(.related.ip))
+.related.user = unique(flatten(.related.user))
+
+##################################################
+### FINAL METADATA
+##################################################
+if !exists(.@timestamp) { .@timestamp = now() }
+if !exists(.event.created) { .event.created = now() }
+if !exists(.event.dataset) { .event.dataset = "generic.logs" }
+
+. = compact(., string: true, array: true, object: true, null: true)

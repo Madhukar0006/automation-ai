@@ -1,0 +1,23 @@
+{
+  "sources": {
+    "stdin_source": {
+      "type": "stdin"
+    }
+  },
+  "transforms": {
+    "json_parser": {
+      "type": "remap",
+      "inputs": ["stdin_source"],
+      "source": "raw = to_string(.message) ?? to_string(.) ?? \"\"\njson_parsed, json_err = parse_json(raw)\nif json_err == null && is_object(json_parsed) {\n    .event_data = json_parsed\n    if exists(json_parsed.time) { .@timestamp = json_parsed.time }\n    if exists(json_parsed.level) { .log.level = json_parsed.level }\n    if exists(json_parsed.message) { .message = json_parsed.message }\n}\n.log.original = raw"
+    }
+  },
+  "sinks": {
+    "stdout_sink": {
+      "type": "console",
+      "inputs": ["json_parser"],
+      "encoding": {
+        "codec": "json"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "total_parsers": 3,
+  "error_free_parsers": 3,
+  "success_rate": 100.0,
+  "parser_results": {
+    "JSON": true,
+    "CEF": true,
+    "SYSLOG": true
+  }
+}

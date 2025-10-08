@@ -1,0 +1,495 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+data:
+  config.yaml: |
+    data_dir: /vector/data
+    
+    sources:
+      file_source:
+        type: file
+        include:
+          - /vector/logs/*.log
+        read_from: beginning
+        
+    transforms:
+      cef_transform:
+        type: remap
+        inputs: [file_source]
+        source: |
+          
+##################################################
+## CEF Parser - ECS Field Mapping + event_data
+##################################################
+
+### ECS observer defaults
+if !exists(.observer.type) { .observer.type = "security" }
+if !exists(.observer.vendor) { .observer.vendor = "cef" }
+if !exists(.observer.product) { .observer.product = "cef" }
+
+### ECS event base defaults
+if !exists(.event.dataset) { .event.dataset = "cef.logs" }
+.event.category = ["security"]
+.event.type = ["info"]
+.event.kind = "event"
+
+##################################################
+### Parse CEF message
+##################################################
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+# Parse CEF format using GROK pattern
+cef_parsed, cef_err = parse_grok(raw, "CEF:%{NUMBER:cef_version}|%{DATA:device_vendor}|%{DATA:device_product}|%{DATA:device_version}|%{DATA:device_event_class_id}|%{DATA:name}|%{NUMBER:severity}|%{GREEDYDATA:extension}")
+
+##################################################
+### Store ALL fields in event_data + Map to ECS
+##################################################
+if cef_err == null && is_object(cef_parsed) {
+    .event.dataset = "cef.logs"
+    .observer.type = "security"
+    
+    # Store the entire parsed CEF in event_data for maximum field preservation
+    .event_data = cef_parsed
+    
+    # ===== CEF HEADER MAPPING =====
+    if exists(cef_parsed.cef_version) { 
+        .event_data.parsed_cef_version = cef_parsed.cef_version
+        .event_data.ecs_cef_version = cef_parsed.cef_version
+    }
+    
+    if exists(cef_parsed.device_vendor) { 
+        .observer.vendor = cef_parsed.device_vendor
+        .event_data.parsed_device_vendor = cef_parsed.device_vendor
+        .event_data.ecs_observer_vendor = cef_parsed.device_vendor
+    }
+    
+    if exists(cef_parsed.device_product) { 
+        .observer.product = cef_parsed.device_product
+        .event_data.parsed_device_product = cef_parsed.device_product
+        .event_data.ecs_observer_product = cef_parsed.device_product
+    }
+    
+    if exists(cef_parsed.device_version) { 
+        .observer.version = cef_parsed.device_version
+        .event_data.parsed_device_version = cef_parsed.device_version
+        .event_data.ecs_observer_version = cef_parsed.device_version
+    }
+    
+    if exists(cef_parsed.device_event_class_id) { 
+        .event.code = cef_parsed.device_event_class_id
+        .event_data.parsed_device_event_class_id = cef_parsed.device_event_class_id
+        .event_data.ecs_event_code = cef_parsed.device_event_class_id
+    }
+    
+    if exists(cef_parsed.name) { 
+        .event.action = downcase(string!(cef_parsed.name))
+        .event_data.parsed_event_name = cef_parsed.name
+        .event_data.ecs_event_action = downcase(string!(cef_parsed.name))
+    }
+    
+    if exists(cef_parsed.severity) { 
+        sev = to_int(cef_parsed.severity) ?? 0
+        .event.severity = sev
+        .event_data.parsed_severity = sev
+        .event_data.ecs_event_severity = sev
+        
+        # Map CEF severity to log level
+        if sev >= 0 && sev <= 3 { 
+            .log.level = "low"
+            .event_data.ecs_log_level = "low"
+        }
+        if sev >= 4 && sev <= 6 { 
+            .log.level = "medium"
+            .event_data.ecs_log_level = "medium"
+        }
+        if sev >= 7 && sev <= 8 { 
+            .log.level = "high"
+            .event_data.ecs_log_level = "high"
+        }
+        if sev >= 9 { 
+            .log.level = "critical"
+            .event_data.ecs_log_level = "critical"
+        }
+    }
+    
+    # ===== CEF EXTENSIONS PARSING =====
+    if exists(cef_parsed.extension) {
+        extensions = cef_parsed.extension
+        cef_extensions, ext_err = parse_key_value(extensions, key_value_delimiter: "=", field_delimiter: " ")
+        
+        if ext_err == null {
+            # Store all extensions in event_data
+            .event_data.parsed_extensions = cef_extensions
+            
+            # ===== SOURCE IP MAPPING =====
+            if exists(cef_extensions.src) { 
+                .source.ip = cef_extensions.src
+                .event_data.parsed_src = cef_extensions.src
+                .event_data.ecs_source_ip = cef_extensions.src
+            }
+            if exists(cef_extensions.shost) { 
+                .source.domain = cef_extensions.shost
+                .event_data.parsed_shost = cef_extensions.shost
+                .event_data.ecs_source_domain = cef_extensions.shost
+            }
+            if exists(cef_extensions.suser) { 
+                .source.user.name = cef_extensions.suser
+                .event_data.parsed_suser = cef_extensions.suser
+                .event_data.ecs_source_user_name = cef_extensions.suser
+            }
+            if exists(cef_extensions.spt) { 
+                .source.port = to_int(cef_extensions.spt) ?? null
+                .event_data.parsed_spt = cef_extensions.spt
+                .event_data.ecs_source_port = to_int(cef_extensions.spt) ?? null
+            }
+            if exists(cef_extensions.smac) { 
+                .source.mac = cef_extensions.smac
+                .event_data.parsed_smac = cef_extensions.smac
+                .event_data.ecs_source_mac = cef_extensions.smac
+            }
+            
+            # ===== DESTINATION IP MAPPING =====
+            if exists(cef_extensions.dst) { 
+                .destination.ip = cef_extensions.dst
+                .event_data.parsed_dst = cef_extensions.dst
+                .event_data.ecs_destination_ip = cef_extensions.dst
+            }
+            if exists(cef_extensions.dhost) { 
+                .destination.domain = cef_extensions.dhost
+                .event_data.parsed_dhost = cef_extensions.dhost
+                .event_data.ecs_destination_domain = cef_extensions.dhost
+            }
+            if exists(cef_extensions.duser) { 
+                .destination.user.name = cef_extensions.duser
+                .event_data.parsed_duser = cef_extensions.duser
+                .event_data.ecs_destination_user_name = cef_extensions.duser
+            }
+            if exists(cef_extensions.dpt) { 
+                .destination.port = to_int(cef_extensions.dpt) ?? null
+                .event_data.parsed_dpt = cef_extensions.dpt
+                .event_data.ecs_destination_port = to_int(cef_extensions.dpt) ?? null
+            }
+            if exists(cef_extensions.dmac) { 
+                .destination.mac = cef_extensions.dmac
+                .event_data.parsed_dmac = cef_extensions.dmac
+                .event_data.ecs_destination_mac = cef_extensions.dmac
+            }
+            
+            # ===== NETWORK MAPPING =====
+            if exists(cef_extensions.proto) { 
+                .network.protocol = downcase(string!(cef_extensions.proto))
+                .event_data.parsed_proto = cef_extensions.proto
+                .event_data.ecs_network_protocol = downcase(string!(cef_extensions.proto))
+            }
+            if exists(cef_extensions.transport) { 
+                .network.transport = downcase(string!(cef_extensions.transport))
+                .event_data.parsed_transport = cef_extensions.transport
+                .event_data.ecs_network_transport = downcase(string!(cef_extensions.transport))
+            }
+            if exists(cef_extensions.bytesIn) { 
+                .network.bytes = to_int(cef_extensions.bytesIn) ?? null
+                .event_data.parsed_bytes_in = cef_extensions.bytesIn
+                .event_data.ecs_network_bytes = to_int(cef_extensions.bytesIn) ?? null
+            }
+            if exists(cef_extensions.bytesOut) { 
+                .network.bytes = to_int(cef_extensions.bytesOut) ?? null
+                .event_data.parsed_bytes_out = cef_extensions.bytesOut
+                .event_data.ecs_network_bytes = to_int(cef_extensions.bytesOut) ?? null
+            }
+            if exists(cef_extensions.packetsIn) { 
+                .network.packets = to_int(cef_extensions.packetsIn) ?? null
+                .event_data.parsed_packets_in = cef_extensions.packetsIn
+                .event_data.ecs_network_packets = to_int(cef_extensions.packetsIn) ?? null
+            }
+            if exists(cef_extensions.packetsOut) { 
+                .network.packets = to_int(cef_extensions.packetsOut) ?? null
+                .event_data.parsed_packets_out = cef_extensions.packetsOut
+                .event_data.ecs_network_packets = to_int(cef_extensions.packetsOut) ?? null
+            }
+            
+            # ===== USER MAPPING =====
+            if exists(cef_extensions.cs1) { 
+                .user.name = cef_extensions.cs1
+                .event_data.parsed_cs1 = cef_extensions.cs1
+                .event_data.ecs_user_name = cef_extensions.cs1
+            }
+            if exists(cef_extensions.cs1Label) { 
+                .event_data.parsed_cs1_label = cef_extensions.cs1Label
+                .event_data.ecs_cs1_label = cef_extensions.cs1Label
+            }
+            if exists(cef_extensions.cs2) { 
+                .user.id = cef_extensions.cs2
+                .event_data.parsed_cs2 = cef_extensions.cs2
+                .event_data.ecs_user_id = cef_extensions.cs2
+            }
+            if exists(cef_extensions.cs2Label) { 
+                .event_data.parsed_cs2_label = cef_extensions.cs2Label
+                .event_data.ecs_cs2_label = cef_extensions.cs2Label
+            }
+            if exists(cef_extensions.cs3) { 
+                .event_data.parsed_cs3 = cef_extensions.cs3
+                .event_data.ecs_cs3 = cef_extensions.cs3
+            }
+            if exists(cef_extensions.cs3Label) { 
+                .event_data.parsed_cs3_label = cef_extensions.cs3Label
+                .event_data.ecs_cs3_label = cef_extensions.cs3Label
+            }
+            if exists(cef_extensions.cs4) { 
+                .event_data.parsed_cs4 = cef_extensions.cs4
+                .event_data.ecs_cs4 = cef_extensions.cs4
+            }
+            if exists(cef_extensions.cs4Label) { 
+                .event_data.parsed_cs4_label = cef_extensions.cs4Label
+                .event_data.ecs_cs4_label = cef_extensions.cs4Label
+            }
+            if exists(cef_extensions.cs5) { 
+                .event_data.parsed_cs5 = cef_extensions.cs5
+                .event_data.ecs_cs5 = cef_extensions.cs5
+            }
+            if exists(cef_extensions.cs5Label) { 
+                .event_data.parsed_cs5_label = cef_extensions.cs5Label
+                .event_data.ecs_cs5_label = cef_extensions.cs5Label
+            }
+            if exists(cef_extensions.cs6) { 
+                .event_data.parsed_cs6 = cef_extensions.cs6
+                .event_data.ecs_cs6 = cef_extensions.cs6
+            }
+            if exists(cef_extensions.cs6Label) { 
+                .event_data.parsed_cs6_label = cef_extensions.cs6Label
+                .event_data.ecs_cs6_label = cef_extensions.cs6Label
+            }
+            
+            # ===== ACTION MAPPING =====
+            if exists(cef_extensions.act) { 
+                .event.action = downcase(string!(cef_extensions.act))
+                .event_data.parsed_act = cef_extensions.act
+                .event_data.ecs_event_action = downcase(string!(cef_extensions.act))
+            }
+            
+            # ===== OUTCOME MAPPING =====
+            if exists(cef_extensions.outcome) { 
+                .event.outcome = downcase(string!(cef_extensions.outcome))
+                .event_data.parsed_outcome = cef_extensions.outcome
+                .event_data.ecs_event_outcome = downcase(string!(cef_extensions.outcome))
+            }
+            if exists(cef_extensions.result) { 
+                .event.outcome = downcase(string!(cef_extensions.result))
+                .event_data.parsed_result = cef_extensions.result
+                .event_data.ecs_event_outcome = downcase(string!(cef_extensions.result))
+            }
+            
+            # ===== APPLICATION MAPPING =====
+            if exists(cef_extensions.app) { 
+                .service.name = cef_extensions.app
+                .event_data.parsed_app = cef_extensions.app
+                .event_data.ecs_service_name = cef_extensions.app
+            }
+            if exists(cef_extensions.application) { 
+                .service.name = cef_extensions.application
+                .event_data.parsed_application = cef_extensions.application
+                .event_data.ecs_service_name = cef_extensions.application
+            }
+            
+            # ===== FILE MAPPING =====
+            if exists(cef_extensions.fname) { 
+                .file.name = cef_extensions.fname
+                .event_data.parsed_fname = cef_extensions.fname
+                .event_data.ecs_file_name = cef_extensions.fname
+            }
+            if exists(cef_extensions.fsize) { 
+                .file.size = to_int(cef_extensions.fsize) ?? null
+                .event_data.parsed_fsize = cef_extensions.fsize
+                .event_data.ecs_file_size = to_int(cef_extensions.fsize) ?? null
+            }
+            if exists(cef_extensions.fileHash) { 
+                .file.hash.sha256 = cef_extensions.fileHash
+                .event_data.parsed_file_hash = cef_extensions.fileHash
+                .event_data.ecs_file_hash_sha256 = cef_extensions.fileHash
+            }
+            
+            # ===== MESSAGE MAPPING =====
+            if exists(cef_extensions.msg) { 
+                .message = cef_extensions.msg
+                .event_data.parsed_msg = cef_extensions.msg
+                .event_data.ecs_message = cef_extensions.msg
+            }
+            if exists(cef_extensions.message) { 
+                .message = cef_extensions.message
+                .event_data.parsed_message = cef_extensions.message
+                .event_data.ecs_message = cef_extensions.message
+            }
+            
+            # ===== HOST MAPPING =====
+            if exists(cef_extensions.host) { 
+                .host.name = cef_extensions.host
+                .event_data.parsed_host = cef_extensions.host
+                .event_data.ecs_host_name = cef_extensions.host
+            }
+            if exists(cef_extensions.dhost) { 
+                .host.name = cef_extensions.dhost
+                .event_data.parsed_dhost = cef_extensions.dhost
+                .event_data.ecs_host_name = cef_extensions.dhost
+            }
+            
+            # ===== PROCESS MAPPING =====
+            if exists(cef_extensions.process) { 
+                .process.name = cef_extensions.process
+                .event_data.parsed_process = cef_extensions.process
+                .event_data.ecs_process_name = cef_extensions.process
+            }
+            if exists(cef_extensions.processId) { 
+                .process.pid = to_int(cef_extensions.processId) ?? null
+                .event_data.parsed_process_id = cef_extensions.processId
+                .event_data.ecs_process_pid = to_int(cef_extensions.processId) ?? null
+            }
+            
+            # ===== TIMESTAMP MAPPING =====
+            if exists(cef_extensions.start) { 
+                .@timestamp = cef_extensions.start
+                .event_data.parsed_start = cef_extensions.start
+                .event_data.ecs_timestamp = cef_extensions.start
+            }
+            if exists(cef_extensions.end) { 
+                .event.end = cef_extensions.end
+                .event_data.parsed_end = cef_extensions.end
+                .event_data.ecs_event_end = cef_extensions.end
+            }
+            if exists(cef_extensions.rt) { 
+                .@timestamp = cef_extensions.rt
+                .event_data.parsed_rt = cef_extensions.rt
+                .event_data.ecs_timestamp = cef_extensions.rt
+            }
+            
+            # ===== LOCATION MAPPING =====
+            if exists(cef_extensions.locality) { 
+                .geo.city_name = cef_extensions.locality
+                .event_data.parsed_locality = cef_extensions.locality
+                .event_data.ecs_geo_city = cef_extensions.locality
+            }
+            if exists(cef_extensions.region) { 
+                .geo.region_name = cef_extensions.region
+                .event_data.parsed_region = cef_extensions.region
+                .event_data.ecs_geo_region = cef_extensions.region
+            }
+            if exists(cef_extensions.country) { 
+                .geo.country_iso_code = cef_extensions.country
+                .event_data.parsed_country = cef_extensions.country
+                .event_data.ecs_geo_country = cef_extensions.country
+            }
+            
+            # ===== URL MAPPING =====
+            if exists(cef_extensions.request) { 
+                .url.full = cef_extensions.request
+                .event_data.parsed_request = cef_extensions.request
+                .event_data.ecs_url = cef_extensions.request
+            }
+            if exists(cef_extensions.requestMethod) { 
+                .http.request.method = upcase(string!(cef_extensions.requestMethod))
+                .event_data.parsed_request_method = cef_extensions.requestMethod
+                .event_data.ecs_http_method = upcase(string!(cef_extensions.requestMethod))
+            }
+            
+            # ===== HTTP STATUS MAPPING =====
+            if exists(cef_extensions.requestContext) { 
+                .http.response.status_code = to_int(cef_extensions.requestContext) ?? null
+                .event_data.parsed_request_context = cef_extensions.requestContext
+                .event_data.ecs_http_status = to_int(cef_extensions.requestContext) ?? null
+            }
+            
+            # ===== CATEGORY MAPPING =====
+            if exists(cef_extensions.category) { 
+                .event.category = [downcase(string!(cef_extensions.category))]
+                .event_data.parsed_category = cef_extensions.category
+                .event_data.ecs_event_category = [downcase(string!(cef_extensions.category))]
+            }
+            
+            # ===== TYPE MAPPING =====
+            if exists(cef_extensions.type) { 
+                .event.type = [downcase(string!(cef_extensions.type))]
+                .event_data.parsed_type = cef_extensions.type
+                .event_data.ecs_event_type = [downcase(string!(cef_extensions.type))]
+            }
+        }
+    }
+}
+
+##################################################
+### Event categorization based on CEF fields
+##################################################
+if exists(.event.action) {
+    action = string!(.event.action)
+    
+    # Authentication events
+    if contains(action, "login") || contains(action, "signin") || contains(action, "authentication") {
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+    }
+    
+    # Network events
+    if contains(action, "connect") || contains(action, "disconnect") || contains(action, "network") {
+        .event.category = ["network"]
+        .event.type = ["connection"]
+    }
+    
+    # File events
+    if contains(action, "file") || contains(action, "access") || contains(action, "read") || contains(action, "write") {
+        .event.category = ["file"]
+        .event.type = ["access"]
+    }
+    
+    # Process events
+    if contains(action, "process") || contains(action, "execute") || contains(action, "launch") {
+        .event.category = ["process"]
+        .event.type = ["start"]
+    }
+}
+
+##################################################
+### Related entities
+##################################################
+.related.ip = []
+.related.user = []
+.related.hosts = []
+
+if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }
+if exists(.destination.ip) { .related.ip = push(.related.ip, .destination.ip) }
+if exists(.user.name) { .related.user = push(.related.user, .user.name) }
+if exists(.source.user.name) { .related.user = push(.related.user, .source.user.name) }
+if exists(.destination.user.name) { .related.user = push(.related.user, .destination.user.name) }
+if exists(.host.name) { .related.hosts = push(.related.hosts, .host.name) }
+
+.related.ip = unique(flatten(.related.ip))
+.related.user = unique(flatten(.related.user))
+.related.hosts = unique(flatten(.related.hosts))
+
+##################################################
+### Timestamp and metadata
+##################################################
+if !exists(.@timestamp) {
+    .@timestamp = now()
+}
+
+if !exists(.event.created) {
+    .event.created = now()
+}
+
+.log.original = raw
+
+##################################################
+### Compact final object
+##################################################
+. = compact(., string: true, array: true, object: true, null: true)
+
+          
+    sinks:
+      file_sink:
+        type: file
+        inputs: [["cef_transform"]]
+        path: /vector/output/processed-logs.json
+        encoding:
+          codec: json
+        buffer:
+          type: memory
+          max_events: 100

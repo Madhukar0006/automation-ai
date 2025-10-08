@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  vector:
+    build: .
+    container_name: vector-validator
+    volumes:
+      - ./config.yaml:/vector/config.yaml:ro
+      - ./input.txt:/vector/logs/input.log:ro
+      - ./vector_output_new:/vector/output:rw
+      - ./data:/vector/data:rw
+    environment:
+      - VECTOR_LOG=info
+    command: ["vector", "--config", "/vector/config.yaml"]
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "vector", "--version"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+

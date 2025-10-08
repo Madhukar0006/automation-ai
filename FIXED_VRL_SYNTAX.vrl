@@ -1,0 +1,69 @@
+##################################################
+## VRL Parser - IPA HTTPD Error Log (Fixed Syntax)
+##################################################
+
+### ECS defaults
+if !exists(.observer.type) { .observer.type = "application" }
+if !exists(.event.dataset) { .event.dataset = "ipa.httpd.error" }
+.event.category = ["web", "authentication"]
+.event.kind = "event"
+.event.type = ["info"]
+
+### Parse log message
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+### Simple GROK pattern - focus on key fields only
+pattern = "<%{POSINT:priority}>%{INT:version} %{TIMESTAMP_ISO8601:timestamp} %{HOSTNAME:hostname} %{WORD:appname} - - - \\[%{HTTPDATE:httpd_time}\\] \\[%{WORD:module}:%{WORD:level}\\] \\[pid %{INT:pid}:tid %{INT:tid}\\] \\[remote %{IP:remote_ip}:%{INT:remote_port}\\] %{WORD:service}: %{WORD:log_level}: \\[%{WORD:session}\\] %{EMAILADDRESS:user}: %{GREEDYDATA:message}"
+
+parsed, err = parse_grok(raw, pattern)
+
+### Error handling - FIXED SYNTAX
+if err != null {
+  .error = "Failed to parse IPA HTTPD log"
+  .event.outcome = "failure"
+  .log.level = "error"
+  . = compact(.)
+  return
+}
+
+### Extract key fields with proper ECS mapping
+### Timestamp (use syslog timestamp as primary)
+if exists(parsed.timestamp) { .@timestamp = parse_timestamp(del(parsed.timestamp), "%Y-%m-%dT%H:%M:%S%.3f%z") ?? now() }
+
+### Host information
+if exists(parsed.hostname) { .host.name = del(parsed.hostname) }
+
+### Service information
+if exists(parsed.appname) { .service.name = del(parsed.appname) }
+if exists(parsed.service) { .service.type = del(parsed.service) }
+
+### Process information
+if exists(parsed.pid) { .process.pid = to_int(del(parsed.pid)) ?? null }
+if exists(parsed.tid) { .process.thread.id = to_int(del(parsed.tid)) ?? null }
+
+### Network information (source of the request)
+if exists(parsed.remote_ip) { .source.ip = del(parsed.remote_ip) }
+if exists(parsed.remote_port) { .source.port = to_int(del(parsed.remote_port)) ?? null }
+
+### User and authentication
+if exists(parsed.user) { .user.email = del(parsed.user) }
+if exists(parsed.session) { .session.id = del(parsed.session) }
+
+### Log level and message
+if exists(parsed.log_level) { .log.level = del(parsed.log_level) }
+if exists(parsed.message) { .message = del(parsed.message) }
+
+### Set event outcome based on log level
+if exists(.log.level) {
+  if .log.level == "ERROR" {
+    .event.outcome = "failure"
+  } else if .log.level == "INFO" {
+    .event.outcome = "success"
+  } else {
+    .event.outcome = "unknown"
+  }
+}
+
+### Final cleanup
+. = compact(.)
+

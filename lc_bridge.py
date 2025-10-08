@@ -148,29 +148,60 @@ def classify_log_lc(raw_log: str, dynamic_prefix: str = "") -> Dict[str, Any]:
     return normalized
 
 
-def generate_ecs_json_lc(context_text: str, raw_log: str, dynamic_prefix: str = "") -> Dict[str, Any]:
+def generate_ecs_json_lc(context_text: str, raw_log: str, dynamic_prefix: str = "", use_openrouter: bool = False, openrouter_api_key: str = None) -> Dict[str, Any]:
     """Generate ECS JSON with robust error handling and automated parsing"""
     try:
-        # Use a more specific prompt for better JSON output
+        # Enhanced prompt for better JSON output
         template = (
             (dynamic_prefix + "\n\n") if dynamic_prefix else ""
         ) + (
-            "You are an expert log parser. Convert this log to ECS JSON format.\n"
+            "You are an expert log parser and ECS specialist. Convert this log to comprehensive ECS JSON format.\n"
             "IMPORTANT: Return ONLY valid JSON. No explanations, no markdown, no code blocks.\n"
             "Required fields: @timestamp, event.original, event.category, message\n"
+            "Additional recommended fields: source.ip, destination.ip, user.name, host.name, observer.vendor, observer.product\n"
             "Context:\n{ctx}\n\nLog to parse:\n{log}\n\n"
+            "Extract ALL relevant fields and map them to proper ECS field names.\n"
             "Return only the JSON object:"
         )
         
-        chain = LLMChain(llm=_ollama("llama3.2:latest"), prompt=PromptTemplate.from_template(template))
+        if use_openrouter and openrouter_api_key:
+            # Use OpenRouter with GPT-4 for enhanced ECS generation
+            from langchain_openai import ChatOpenAI
+            import os
+            
+            os.environ["OPENROUTER_API_KEY"] = openrouter_api_key
+            
+            llm = ChatOpenAI(
+                model="openai/gpt-4o",
+                base_url="https://openrouter.ai/api/v1",
+                api_key=openrouter_api_key,
+                temperature=0.0,
+                max_tokens=1500,
+                extra_headers={
+                    "HTTP-Referer": "https://parserautomation.local",
+                    "X-Title": "ECS Parser"
+                }
+            )
+        else:
+            # Use Ollama as fallback
+            llm = _ollama("llama3.2:latest")
+        
+        chain = LLMChain(llm=llm, prompt=PromptTemplate.from_template(template))
         out = chain.run({"ctx": context_text, "log": raw_log}).strip()
         
         # Automated JSON extraction and cleaning
-        return _extract_and_clean_json(out, raw_log)
+        result = _extract_and_clean_json(out, raw_log)
+        
+        # Add generation metadata
+        result["_generation_method"] = "openrouter_gpt4" if use_openrouter else "ollama_llama32"
+        
+        return result
         
     except Exception as e:
         # Fallback to automated ECS generation
-        return _generate_fallback_ecs(raw_log, str(e))
+        fallback_result = _generate_fallback_ecs(raw_log, str(e))
+        fallback_result["_generation_method"] = "fallback"
+        return fallback_result
 
 
 def _extract_and_clean_json(text: str, original_log: str) -> Dict[str, Any]:

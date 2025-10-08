@@ -1,15 +1,163 @@
+##################################################
+## RFC5424 Syslog Parser - Fixed GROK Pattern
+##################################################
 
-# JSON Log Parser
+#### ECS defaults
+if !exists(.observer.type) { .observer.type = "host" }
+if !exists(.observer.vendor) { .observer.vendor = "syslog" }
+if !exists(.observer.product) { .observer.product = "dirsrv" }
+if !exists(.event.dataset) { .event.dataset = "syslog.logs" }
+.event.category = ["process"]
+.event.type = ["error"]
 .event.kind = "event"
-.event.category = ["unknown"]
-.event.created = now()
-.message = .
 
-# Parse JSON - ensure string type
-.parsed = parse_json(string!(.))
-if is_object(.parsed) {
-    .event.type = ["info"]
-    .event.dataset = "json.logs"
+#### Adding log metadata for visibility
+.log_type = "syslog"
+.log_format = "syslog"
+.log_source = "ipa-dirsrv"
+.vendor = .observer.vendor
+.product = .observer.product
+
+#### Get raw message
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+#### Parse RFC5424 Syslog with FIXED GROK
+_grokked, err = parse_groks(raw, [
+  # RFC5424 format with (-|) to match optional fields (dash or actual value)
+  # Note: THREE optional fields: procid, msgid, structured-data
+  "<%{INT:syslog_priority}>%{INT:syslog_version} %{TIMESTAMP_ISO8601:syslog_timestamp} %{HOSTNAME:syslog_hostname} %{DATA:syslog_appname} (?:-|%{DATA:syslog_procid}) (?:-|%{DATA:syslog_msgid}) (?:-|%{DATA:syslog_structdata}) \\[%{HTTPDATE:log_timestamp}\\] - %{WORD:log_level} - %{DATA:log_module} - \\[file %{DATA:log_file}, line %{INT:log_line}\\]: %{GREEDYDATA:log_message}",
+  # Fallback
+  "%{GREEDYDATA:unparsed}"
+])
+
+if err == null { . = merge(., _grokked, deep: true) }
+
+#### Extract priority components
+if exists(.syslog_priority) {
+  priority = to_int(.syslog_priority) ?? 0
+  
+  # Calculate facility and severity
+  .log.syslog.facility.code = floor(priority / 8)
+  .log.syslog.severity.code = mod(priority, 8)
+  
+  # Map severity to log level (use from message if available)
+  if !exists(.log_level) {
+    severity = .log.syslog.severity.code
+    if severity == 0 { .log.level = "emergency" }
+    if severity == 1 { .log.level = "alert" }
+    if severity == 2 { .log.level = "critical" }
+    if severity == 3 { .log.level = "error" }
+    if severity == 4 { .log.level = "warning" }
+    if severity == 5 { .log.level = "notice" }
+    if severity == 6 { .log.level = "informational" }
+    if severity == 7 { .log.level = "debug" }
+  }
+  
+  del(.syslog_priority)
 }
 
-.@timestamp = now()
+#### Parse timestamp
+if exists(.syslog_timestamp) {
+  parsed_ts, ts_err = parse_timestamp(.syslog_timestamp, "%Y-%m-%dT%H:%M:%S%.f%:z")
+  if ts_err != null {
+    parsed_ts, ts_err = parse_timestamp(.syslog_timestamp, "%Y-%m-%dT%H:%M:%S%:z")
+  }
+  if ts_err == null {
+    .@timestamp = parsed_ts
+  }
+  del(.syslog_timestamp)
+}
+
+#### Extract hostname
+if exists(.syslog_hostname) {
+  .host.hostname = del(.syslog_hostname)
+  .host.name = .host.hostname
+}
+
+#### Extract application name
+if exists(.syslog_appname) {
+  .service.name = del(.syslog_appname)
+  .process.name = .service.name
+}
+
+#### Extract process ID (only if not dash)
+if exists(.syslog_procid) {
+  .process.pid = to_int!(.syslog_procid) ?? null
+  del(.syslog_procid)
+}
+
+#### Extract message ID (only if not dash)
+if exists(.syslog_msgid) {
+  .event.code = del(.syslog_msgid)
+}
+
+#### Clean up structured data
+if exists(.syslog_structdata) { del(.syslog_structdata) }
+if exists(.syslog_version) { del(.syslog_version) }
+
+#### Extract log level from message
+if exists(.log_level) {
+  .log.level = downcase!(.log_level) ?? null
+  del(.log_level)
+}
+
+#### Extract log module/function
+if exists(.log_module) {
+  .log.origin.function = del(.log_module)
+}
+
+#### Extract source file
+if exists(.log_file) {
+  .log.origin.file.name = del(.log_file)
+}
+
+#### Extract source line
+if exists(.log_line) {
+  .log.origin.file.line = to_int!(del(.log_line)) ?? null
+}
+
+#### Set message
+if exists(.log_message) {
+  .message = del(.log_message)
+} else {
+  .message = raw
+}
+
+#### Parse log timestamp from message
+if exists(.log_timestamp) {
+  .event.created = parse_timestamp!(.log_timestamp, "%d/%b/%Y:%H:%M:%S%.f %z") ?? null
+  del(.log_timestamp)
+}
+
+#### Set event outcome based on log level
+if exists(.log.level) {
+  level = .log.level
+  if level == "error" || level == "err" || level == "critical" || level == "alert" || level == "emergency" {
+    .event.outcome = "failure"
+  } else {
+    .event.outcome = "success"
+  }
+}
+
+#### Store non-ECS fields in event_data ####
+# Initialize event_data for custom/vendor-specific fields
+if !exists(.event_data) { .event_data = {} }
+
+# Move any remaining parsed fields that are NOT in ECS schema to event_data
+# If GROK extracted fields like correlation_id, request_id, custom fields
+# Example: if exists(.correlation_id) { .event_data.correlation_id = del(.correlation_id) }
+
+#### Set original log
+.event.original = raw
+
+#### Related entities
+.related.hosts = []
+if exists(.host.hostname) { .related.hosts = push(.related.hosts, .host.hostname) }
+.related.hosts = unique(flatten(.related.hosts))
+
+#### Timestamp defaults - removed now() fallback per user request
+# if !exists(.@timestamp) { .@timestamp = now() }
+# if !exists(.event.created) { .event.created = now() }
+
+#### Compact final object
+. = compact(., string: true, array: true, object: true, null: true)

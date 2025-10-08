@@ -1,0 +1,557 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+data:
+  config.yaml: |
+    data_dir: /vector/data
+    
+    sources:
+      file_source:
+        type: file
+        include:
+          - /vector/logs/*.log
+        read_from: beginning
+        
+    transforms:
+      json_transform:
+        type: remap
+        inputs: [file_source]
+        source: |
+          
+##################################################
+## JSON Parser - ECS Field Mapping + event_data
+##################################################
+
+### ECS observer defaults
+if !exists(.observer.type) { .observer.type = "application" }
+if !exists(.observer.vendor) { .observer.vendor = "json" }
+if !exists(.observer.product) { .observer.product = "json" }
+
+### ECS event base defaults
+if !exists(.event.dataset) { .event.dataset = "json.logs" }
+.event.category = ["application"]
+.event.type = ["info"]
+.event.kind = "event"
+
+##################################################
+### Parse JSON message
+##################################################
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+# Parse JSON format
+json_parsed, json_err = parse_json(raw)
+
+##################################################
+### Store ALL fields in event_data + Map to ECS
+##################################################
+if json_err == null && is_object(json_parsed) {
+    .event.dataset = "json.logs"
+    .observer.type = "application"
+    
+    # Store the entire parsed JSON in event_data for maximum field preservation
+    .event_data = json_parsed
+    
+    # ===== TIMESTAMP MAPPING =====
+    if exists(json_parsed.timestamp) { 
+        .@timestamp = json_parsed.timestamp
+        .event_data.ecs_timestamp = json_parsed.timestamp
+    }
+    if exists(json_parsed.time) { 
+        .@timestamp = json_parsed.time
+        .event_data.ecs_timestamp = json_parsed.time
+    }
+    if exists(json_parsed.date) { 
+        .@timestamp = json_parsed.date
+        .event_data.ecs_timestamp = json_parsed.date
+    }
+    if exists(json_parsed.datetime) { 
+        .@timestamp = json_parsed.datetime
+        .event_data.ecs_timestamp = json_parsed.datetime
+    }
+    
+    # ===== LOG LEVEL MAPPING =====
+    # Preserve original field names while mapping to ECS
+    if exists(json_parsed.level) {
+        .log.level = downcase(string!(json_parsed.level))
+        .event_data.original_level = json_parsed.level
+        .event_data.ecs_log_level = downcase(string!(json_parsed.level))
+    }
+    if exists(json_parsed.severity) {
+        # Only set ECS level if not already set by 'level' field
+        if !exists(.log.level) {
+            .log.level = downcase(string!(json_parsed.severity))
+        }
+        .event_data.original_severity = json_parsed.severity
+        .event_data.ecs_log_level = downcase(string!(json_parsed.severity))
+    }
+    if exists(json_parsed.priority) {
+        # Only set ECS level if not already set by 'level' or 'severity' field
+        if !exists(.log.level) {
+            .log.level = downcase(string!(json_parsed.priority))
+        }
+        .event_data.original_priority = json_parsed.priority
+        .event_data.ecs_log_level = downcase(string!(json_parsed.priority))
+    }
+    
+    # Microsoft/Azure AD level mapping to ECS
+    if exists(json_parsed.Level) { 
+        level_num = to_int(json_parsed.Level) ?? 0
+        .event_data.parsed_level_num = level_num
+        .event_data.parsed_level_text = "info"
+        if level_num <= 2 { 
+            .log.level = "critical"
+            .event_data.ecs_log_level = "critical"
+            .event_data.parsed_level_text = "critical"
+        }
+        if level_num == 3 { 
+            .log.level = "error"
+            .event_data.ecs_log_level = "error"
+            .event_data.parsed_level_text = "error"
+        }
+        if level_num == 4 { 
+            .log.level = "warn"
+            .event_data.ecs_log_level = "warn"
+            .event_data.parsed_level_text = "warn"
+        }
+        if level_num == 5 { 
+            .log.level = "info"
+            .event_data.ecs_log_level = "info"
+            .event_data.parsed_level_text = "info"
+        }
+        if level_num >= 6 { 
+            .log.level = "debug"
+            .event_data.ecs_log_level = "debug"
+            .event_data.parsed_level_text = "debug"
+        }
+    }
+    
+    # ===== MESSAGE MAPPING =====
+    # Preserve original field names while mapping to ECS
+    if exists(json_parsed.message) {
+        .message = json_parsed.message
+        .event_data.original_message = json_parsed.message
+        .event_data.ecs_message = json_parsed.message
+    }
+    if exists(json_parsed.msg) {
+        # Only set main message if not already set by 'message' field
+        if !exists(.message) {
+            .message = json_parsed.msg
+        }
+        .event_data.original_msg = json_parsed.msg
+        .event_data.ecs_message = json_parsed.msg
+    }
+    if exists(json_parsed.text) {
+        # Only set main message if not already set by 'message' or 'msg' field
+        if !exists(.message) {
+            .message = json_parsed.text
+        }
+        .event_data.original_text = json_parsed.text
+        .event_data.ecs_message = json_parsed.text
+    }
+    
+    # ===== HOST MAPPING =====
+    # Preserve original field names while mapping to ECS
+    if exists(json_parsed.host) { 
+        .host.name = json_parsed.host
+        .event_data.original_host = json_parsed.host
+        .event_data.ecs_host_name = json_parsed.host
+    }
+    if exists(json_parsed.hostname) {
+        # Only set ECS host if not already set by 'host' field
+        if !exists(.host.name) {
+            .host.name = json_parsed.hostname
+        }
+        .event_data.original_hostname = json_parsed.hostname
+        .event_data.ecs_host_name = json_parsed.hostname
+    }
+    if exists(json_parsed.server) {
+        # Only set ECS host if not already set by 'host' or 'hostname' field
+        if !exists(.host.name) {
+            .host.name = json_parsed.server
+        }
+        .event_data.original_server = json_parsed.server
+        .event_data.ecs_host_name = json_parsed.server
+    }
+    if exists(json_parsed.computer) {
+        # Only set ECS host if not already set by other host fields
+        if !exists(.host.name) {
+            .host.name = json_parsed.computer
+        }
+        .event_data.original_computer = json_parsed.computer
+        .event_data.ecs_host_name = json_parsed.computer
+    }
+    
+    # ===== SERVICE MAPPING =====
+    if exists(json_parsed.service) { 
+        .service.name = json_parsed.service
+        .event_data.ecs_service_name = json_parsed.service
+    }
+    if exists(json_parsed.app) { 
+        .service.name = json_parsed.app
+        .event_data.ecs_service_name = json_parsed.app
+    }
+    if exists(json_parsed.application) { 
+        .service.name = json_parsed.application
+        .event_data.ecs_service_name = json_parsed.application
+    }
+    
+    # Microsoft/Azure AD service mapping
+    if exists(json_parsed.appDisplayName) { 
+        .service.name = json_parsed.appDisplayName
+        .event_data.ecs_service_name = json_parsed.appDisplayName
+    }
+    if exists(json_parsed.resourceDisplayName) { 
+        .service.name = json_parsed.resourceDisplayName
+        .event_data.ecs_service_name = json_parsed.resourceDisplayName
+    }
+    
+    # ===== USER MAPPING =====
+    # Preserve original field names while mapping to ECS
+    if exists(json_parsed.user) { 
+        .user.name = json_parsed.user
+        .event_data.original_user = json_parsed.user
+        .event_data.ecs_user_name = json_parsed.user
+        .event_data.parsed_user = json_parsed.user
+    }
+    if exists(json_parsed.username) {
+        # Only set ECS user if not already set by 'user' field
+        if !exists(.user.name) {
+            .user.name = json_parsed.username
+        }
+        .event_data.original_username = json_parsed.username
+        .event_data.ecs_user_name = json_parsed.username
+        .event_data.parsed_username = json_parsed.username
+    }
+    if exists(json_parsed.user_name) {
+        # Only set ECS user if not already set by 'user' or 'username' field
+        if !exists(.user.name) {
+            .user.name = json_parsed.user_name
+        }
+        .event_data.original_user_name = json_parsed.user_name
+        .event_data.ecs_user_name = json_parsed.user_name
+        .event_data.parsed_user_name = json_parsed.user_name
+    }
+    if exists(json_parsed.account) {
+        # Only set ECS user if not already set by other user fields
+        if !exists(.user.name) {
+            .user.name = json_parsed.account
+        }
+        .event_data.original_account = json_parsed.account
+        .event_data.ecs_user_name = json_parsed.account
+        .event_data.parsed_account = json_parsed.account
+    }
+    
+    # Microsoft/Azure AD user mapping
+    if exists(json_parsed.identity) { 
+        .user.name = json_parsed.identity
+        .event_data.ecs_user_name = json_parsed.identity
+        .event_data.parsed_identity = json_parsed.identity
+    }
+    if exists(json_parsed.userDisplayName) { 
+        .user.name = json_parsed.userDisplayName
+        .event_data.ecs_user_name = json_parsed.userDisplayName
+        .event_data.parsed_user_display_name = json_parsed.userDisplayName
+    }
+    if exists(json_parsed.userPrincipalName) { 
+        .user.name = json_parsed.userPrincipalName
+        .event_data.ecs_user_name = json_parsed.userPrincipalName
+        .event_data.parsed_user_principal_name = json_parsed.userPrincipalName
+    }
+    
+    # ===== SOURCE IP MAPPING =====
+    # Preserve original field names while mapping to ECS
+    if exists(json_parsed.ip) { 
+        .source.ip = json_parsed.ip
+        .event_data.original_ip = json_parsed.ip
+        .event_data.ecs_source_ip = json_parsed.ip
+        .event_data.parsed_ip = json_parsed.ip
+    }
+    if exists(json_parsed.client_ip) {
+        # Only set ECS source IP if not already set by 'ip' field
+        if !exists(.source.ip) {
+            .source.ip = json_parsed.client_ip
+        }
+        .event_data.original_client_ip = json_parsed.client_ip
+        .event_data.ecs_source_ip = json_parsed.client_ip
+        .event_data.parsed_client_ip = json_parsed.client_ip
+    }
+    if exists(json_parsed.remote_ip) {
+        # Only set ECS source IP if not already set by 'ip' or 'client_ip' field
+        if !exists(.source.ip) {
+            .source.ip = json_parsed.remote_ip
+        }
+        .event_data.original_remote_ip = json_parsed.remote_ip
+        .event_data.ecs_source_ip = json_parsed.remote_ip
+        .event_data.parsed_remote_ip = json_parsed.remote_ip
+    }
+    if exists(json_parsed.src_ip) {
+        # Only set ECS source IP if not already set by other IP fields
+        if !exists(.source.ip) {
+            .source.ip = json_parsed.src_ip
+        }
+        .event_data.original_src_ip = json_parsed.src_ip
+        .event_data.ecs_source_ip = json_parsed.src_ip
+        .event_data.parsed_src_ip = json_parsed.src_ip
+    }
+    
+    # Microsoft/Azure AD source IP mapping
+    if exists(json_parsed.callerIpAddress) { 
+        .source.ip = json_parsed.callerIpAddress
+        .event_data.ecs_source_ip = json_parsed.callerIpAddress
+        .event_data.parsed_caller_ip_address = json_parsed.callerIpAddress
+    }
+    if exists(json_parsed.ipAddress) { 
+        .source.ip = json_parsed.ipAddress
+        .event_data.ecs_source_ip = json_parsed.ipAddress
+        .event_data.parsed_ip_address = json_parsed.ipAddress
+    }
+    
+    # ===== DESTINATION IP MAPPING =====
+    if exists(json_parsed.dest_ip) { 
+        .destination.ip = json_parsed.dest_ip
+        .event_data.ecs_destination_ip = json_parsed.dest_ip
+    }
+    if exists(json_parsed.dst_ip) { 
+        .destination.ip = json_parsed.dst_ip
+        .event_data.ecs_destination_ip = json_parsed.dst_ip
+    }
+    if exists(json_parsed.destination_ip) { 
+        .destination.ip = json_parsed.destination_ip
+        .event_data.ecs_destination_ip = json_parsed.destination_ip
+    }
+    if exists(json_parsed.target_ip) { 
+        .destination.ip = json_parsed.target_ip
+        .event_data.ecs_destination_ip = json_parsed.target_ip
+    }
+    
+    # ===== PORT MAPPING =====
+    if exists(json_parsed.src_port) { 
+        .source.port = to_int(json_parsed.src_port) ?? null
+        .event_data.ecs_source_port = to_int(json_parsed.src_port) ?? null
+    }
+    if exists(json_parsed.source_port) { 
+        .source.port = to_int(json_parsed.source_port) ?? null
+        .event_data.ecs_source_port = to_int(json_parsed.source_port) ?? null
+    }
+    if exists(json_parsed.local_port) { 
+        .source.port = to_int(json_parsed.local_port) ?? null
+        .event_data.ecs_source_port = to_int(json_parsed.local_port) ?? null
+    }
+    
+    if exists(json_parsed.dst_port) { 
+        .destination.port = to_int(json_parsed.dst_port) ?? null
+        .event_data.ecs_destination_port = to_int(json_parsed.dst_port) ?? null
+    }
+    if exists(json_parsed.destination_port) { 
+        .destination.port = to_int(json_parsed.destination_port) ?? null
+        .event_data.ecs_destination_port = to_int(json_parsed.destination_port) ?? null
+    }
+    if exists(json_parsed.port) { 
+        .destination.port = to_int(json_parsed.port) ?? null
+        .event_data.ecs_destination_port = to_int(json_parsed.port) ?? null
+    }
+    
+    # ===== HTTP MAPPING =====
+    if exists(json_parsed.method) { 
+        .http.request.method = upcase(string!(json_parsed.method))
+        .event_data.ecs_http_method = upcase(string!(json_parsed.method))
+    }
+    if exists(json_parsed.http_method) { 
+        .http.request.method = upcase(string!(json_parsed.http_method))
+        .event_data.ecs_http_method = upcase(string!(json_parsed.http_method))
+    }
+    
+    if exists(json_parsed.url) { 
+        .url.full = json_parsed.url
+        .event_data.ecs_url = json_parsed.url
+    }
+    if exists(json_parsed.uri) { 
+        .url.full = json_parsed.uri
+        .event_data.ecs_url = json_parsed.uri
+    }
+    if exists(json_parsed.path) { 
+        .url.path = json_parsed.path
+        .event_data.ecs_url_path = json_parsed.path
+    }
+    
+    # ===== STATUS CODE MAPPING =====
+    if exists(json_parsed.status) { 
+        status_code = to_int(json_parsed.status) ?? 0
+        .http.response.status_code = status_code
+        .event_data.ecs_status_code = status_code
+        if status_code >= 200 && status_code < 300 { 
+            .event.outcome = "success"
+            .event_data.ecs_event_outcome = "success"
+        }
+        if status_code >= 400 { 
+            .event.outcome = "failure"
+            .event_data.ecs_event_outcome = "failure"
+        }
+    }
+    if exists(json_parsed.status_code) { 
+        status_code = to_int(json_parsed.status_code) ?? 0
+        .http.response.status_code = status_code
+        .event_data.ecs_status_code = status_code
+        if status_code >= 200 && status_code < 300 { 
+            .event.outcome = "success"
+            .event_data.ecs_event_outcome = "success"
+        }
+        if status_code >= 400 { 
+            .event.outcome = "failure"
+            .event_data.ecs_event_outcome = "failure"
+        }
+    }
+    
+    # ===== ACTION MAPPING =====
+    if exists(json_parsed.action) { 
+        .event.action = downcase(string!(json_parsed.action))
+        .event_data.ecs_event_action = downcase(string!(json_parsed.action))
+        .event_data.parsed_action = json_parsed.action
+    }
+    if exists(json_parsed.operation) { 
+        .event.action = downcase(string!(json_parsed.operation))
+        .event_data.ecs_event_action = downcase(string!(json_parsed.operation))
+        .event_data.parsed_operation = json_parsed.operation
+    }
+    
+    # Microsoft/Azure AD action mapping
+    if exists(json_parsed.operationName) { 
+        .event.action = downcase(string!(json_parsed.operationName))
+        .event_data.ecs_event_action = downcase(string!(json_parsed.operationName))
+        .event_data.parsed_operation_name = json_parsed.operationName
+    }
+    
+    # ===== SESSION MAPPING =====
+    if exists(json_parsed.session_id) { 
+        .session.id = json_parsed.session_id
+        .event_data.ecs_session_id = json_parsed.session_id
+    }
+    if exists(json_parsed.correlation_id) { 
+        .session.id = json_parsed.correlation_id
+        .event_data.ecs_session_id = json_parsed.correlation_id
+    }
+    
+    # Microsoft/Azure AD session mapping
+    if exists(json_parsed.correlationId) { 
+        .session.id = json_parsed.correlationId
+        .event_data.ecs_session_id = json_parsed.correlationId
+    }
+    
+    # ===== PROTOCOL MAPPING =====
+    if exists(json_parsed.protocol) { 
+        .network.protocol = downcase(string!(json_parsed.protocol))
+        .event_data.ecs_network_protocol = downcase(string!(json_parsed.protocol))
+    }
+    if exists(json_parsed.proto) { 
+        .network.protocol = downcase(string!(json_parsed.proto))
+        .event_data.ecs_network_protocol = downcase(string!(json_parsed.proto))
+    }
+    
+    # Microsoft/Azure AD protocol mapping
+    if exists(json_parsed.authenticationProtocol) { 
+        .network.protocol = downcase(string!(json_parsed.authenticationProtocol))
+        .event_data.ecs_network_protocol = downcase(string!(json_parsed.authenticationProtocol))
+    }
+    
+    # ===== EVENT CATEGORIZATION =====
+    if exists(json_parsed.authenticationRequirement) { 
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+        .event_data.ecs_event_category = ["authentication"]
+        .event_data.ecs_event_type = ["start"]
+    }
+    if exists(json_parsed.userType) { 
+        .user.type = json_parsed.userType
+        .event_data.ecs_user_type = json_parsed.userType
+    }
+    if exists(json_parsed.isInteractive) { 
+        if json_parsed.isInteractive == true { 
+            .event.type = ["start"]
+            .event_data.ecs_event_type = ["start"]
+        }
+        if json_parsed.isInteractive == false { 
+            .event.type = ["info"]
+            .event_data.ecs_event_type = ["info"]
+        }
+    }
+}
+
+##################################################
+### Event categorization based on content
+##################################################
+if exists(.message) {
+    msg = string!(.message)
+    
+    # Detect event categories based on message content
+    if contains(msg, "authentication") || contains(msg, "login") || contains(msg, "sign") {
+        .event.category = ["authentication"]
+        .event.type = ["start"]
+    }
+    
+    if contains(msg, "network") || contains(msg, "connection") {
+        .event.category = ["network"]
+        .event.type = ["connection"]
+    }
+    
+    if contains(msg, "file") || contains(msg, "access") {
+        .event.category = ["file"]
+        .event.type = ["access"]
+    }
+    
+    # Detect success/failure based on message content
+    if contains(msg, "failed") || contains(msg, "failure") || contains(msg, "error") {
+        .event.outcome = "failure"
+    }
+    
+    if contains(msg, "success") || contains(msg, "accepted") || contains(msg, "completed") {
+        .event.outcome = "success"
+    }
+}
+
+##################################################
+### Related entities
+##################################################
+.related.ip = []
+.related.user = []
+.related.hosts = []
+
+if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }
+if exists(.destination.ip) { .related.ip = push(.related.ip, .destination.ip) }
+if exists(.user.name) { .related.user = push(.related.user, .user.name) }
+if exists(.host.name) { .related.hosts = push(.related.hosts, .host.name) }
+
+.related.ip = unique(flatten(.related.ip))
+.related.user = unique(flatten(.related.user))
+.related.hosts = unique(flatten(.related.hosts))
+
+##################################################
+### Timestamp and metadata
+##################################################
+if !exists(.@timestamp) {
+    .@timestamp = now()
+}
+
+if !exists(.event.created) {
+    .event.created = now()
+}
+
+.log.original = raw
+
+##################################################
+### Compact final object
+##################################################
+. = compact(., string: true, array: true, object: true, null: true)
+
+          
+    sinks:
+      file_sink:
+        type: file
+        inputs: [["json_transform"]]
+        path: /vector/output/processed-logs.json
+        encoding:
+          codec: json
+        buffer:
+          type: memory
+          max_events: 100

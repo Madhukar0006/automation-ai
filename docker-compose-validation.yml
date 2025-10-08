@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  vector-validator:
+    image: timberio/vector:0.49.0-debian
+    container_name: vector-parser-validator
+    volumes:
+      - ./vector_configs:/etc/vector
+    command: validate --config-yaml /etc/vector/parser.yaml
+    profiles:
+      - validation
+
+  vector-test:
+    image: timberio/vector:0.49.0-debian
+    container_name: vector-parser-test
+    volumes:
+      - ./vector_configs:/etc/vector
+      - ./test_logs:/etc/vector/logs
+    command: --config-yaml /etc/vector/parser.yaml
+    stdin_open: true
+    tty: true
+    profiles:
+      - testing
+

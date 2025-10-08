@@ -1,0 +1,6 @@
+[transforms.test_transform]
+type = "remap"
+inputs = []
+source = '''
+.event.kind = "event"
+'''

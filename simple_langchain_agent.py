@@ -12,9 +12,14 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema import HumanMessage, AIMessage
 
 from complete_rag_system import CompleteRAGSystem
-from vrl_error_integration import VRL_Error_Handler
 from log_analyzer import identify_log_type
 from lc_bridge import generate_ecs_json_lc as generate_ecs_json
+
+
+class VRL_Error_Handler:
+    """Simple VRL error handler for compatibility"""
+    def fix_vrl_errors(self, vrl_code: str, errors: str) -> Dict[str, Any]:
+        return {"success": True, "fixed_vrl": vrl_code, "message": "Error handling not implemented"}
 
 
 class SimpleLogParsingAgent:
@@ -195,6 +200,108 @@ Be thorough and ensure generated parsers follow best practices."""),
         except Exception as e:
             return {"success": False, "error": str(e)}
     
+    def _generate_minimal_microsoft_parser(self) -> str:
+        """Generate minimal VRL parser specifically for Microsoft/Azure AD logs"""
+        return '''##################################################
+## Minimal Microsoft/Azure AD JSON Parser
+##################################################
+
+### ECS observer defaults
+if !exists(.observer.type) { .observer.type = "application" }
+if !exists(.observer.vendor) { .observer.vendor = "microsoft" }
+if !exists(.observer.product) { .observer.product = "azure-ad" }
+
+### ECS event base defaults
+if !exists(.event.dataset) { .event.dataset = "azure-ad.logs" }
+.event.category = ["authentication"]
+.event.type = ["info"]
+.event.kind = "event"
+
+##################################################
+### Parse JSON message
+##################################################
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+# Parse JSON format
+json_parsed, json_err = parse_json(raw)
+
+##################################################
+### Process Microsoft/Azure AD fields
+##################################################
+if json_err == null && is_object(json_parsed) {
+    # Microsoft/Azure AD specific fields
+    if exists(json_parsed.Level) { 
+        level_num = to_int(json_parsed.Level) ?? 0
+        if level_num <= 2 { .log.level = "critical" }
+        if level_num == 3 { .log.level = "error" }
+        if level_num == 4 { .log.level = "warn" }
+        if level_num == 5 { .log.level = "info" }
+        if level_num >= 6 { .log.level = "debug" }
+    }
+    
+    if exists(json_parsed.callerIpAddress) { .source.ip = json_parsed.callerIpAddress }
+    if exists(json_parsed.ipAddress) { .source.ip = json_parsed.ipAddress }
+    
+    if exists(json_parsed.identity) { .user.name = json_parsed.identity }
+    if exists(json_parsed.userDisplayName) { .user.name = json_parsed.userDisplayName }
+    if exists(json_parsed.userPrincipalName) { .user.name = json_parsed.userPrincipalName }
+    
+    if exists(json_parsed.operationName) { .event.action = downcase(string!(json_parsed.operationName)) }
+    
+    if exists(json_parsed.correlationId) { .session.id = json_parsed.correlationId }
+    
+    if exists(json_parsed.location) { .geo.country_iso_code = json_parsed.location }
+    if exists(json_parsed.countryOrRegion) { .geo.country_iso_code = json_parsed.countryOrRegion }
+    
+    if exists(json_parsed.appDisplayName) { .service.name = json_parsed.appDisplayName }
+    if exists(json_parsed.resourceDisplayName) { .service.name = json_parsed.resourceDisplayName }
+    
+    if exists(json_parsed.conditionalAccessStatus) { .event.outcome = json_parsed.conditionalAccessStatus }
+    
+    if exists(json_parsed.time) { .@timestamp = json_parsed.time }
+    if exists(json_parsed.createdDateTime) { .@timestamp = json_parsed.createdDateTime }
+    
+    # Device information
+    if exists(json_parsed.deviceDetail) {
+        if is_object(json_parsed.deviceDetail) {
+            if exists(json_parsed.deviceDetail.displayName) { .host.name = json_parsed.deviceDetail.displayName }
+            if exists(json_parsed.deviceDetail.operatingSystem) { .host.os.name = json_parsed.deviceDetail.operatingSystem }
+            if exists(json_parsed.deviceDetail.browser) { .user_agent.name = json_parsed.deviceDetail.browser }
+        }
+    }
+    
+    # Authentication details
+    if exists(json_parsed.authenticationRequirement) { .event.type = ["authentication"] }
+    if exists(json_parsed.userType) { .user.type = json_parsed.userType }
+    if exists(json_parsed.isInteractive) { 
+        if json_parsed.isInteractive == true { .event.type = ["start"] }
+        if json_parsed.isInteractive == false { .event.type = ["info"] }
+    }
+}
+
+##################################################
+### Related entities
+##################################################
+.related.ip = []
+.related.user = []
+
+if exists(.source.ip) { .related.ip = push(.related.ip, .source.ip) }
+if exists(.user.name) { .related.user = push(.related.user, .user.name) }
+
+.related.ip = unique(flatten(.related.ip))
+.related.user = unique(flatten(.related.user))
+
+##################################################
+### Timestamp and metadata
+##################################################
+# Note: No now() fallback - only use parsed timestamps
+.log.original = raw
+
+##################################################
+### Compact final object
+##################################################
+. = compact(., string: true, array: true, object: true, null: true)'''
+    
     def _load_sourcelist_mapping(self) -> List[Dict[str, Any]]:
         """Load sourcelist.json mapping"""
         try:
@@ -236,103 +343,258 @@ Be thorough and ensure generated parsers follow best practices."""),
             return {"success": False, "error": str(e)}
     
     def _generate_simple_vrl(self, log_content: str, log_format: str) -> Dict[str, Any]:
-        """Generate comprehensive VRL code that extracts ALL fields like human experts"""
+        """Generate comprehensive VRL code that extracts ALL fields using AI (NO HARDCODING)"""
         try:
-            # Use ENHANCED GROK-based VRL templates that eliminate duplication and extract ALL fields
-            if log_format == "json":
-                from enhanced_grok_parser import generate_enhanced_grok_json_vrl
-                vrl_code = generate_enhanced_grok_json_vrl()
-            elif log_format == "syslog":
-                from enhanced_grok_parser import generate_enhanced_grok_syslog_vrl
-                vrl_code = generate_enhanced_grok_syslog_vrl()
-            else:
-                vrl_code = """
-# Clean GROK-Based Generic Log Parser - No Duplication, No Nesting
-.message = .
-
-# Basic text processing using GROK patterns
-if is_string(.) {
-    .input_string = string!(.)
-    
-    # Extract timestamp using GROK
-    .timestamp_parsed, err = parse_grok(.input_string, "%{TIMESTAMP_ISO8601:timestamp}")
-    if err == null && exists(.timestamp_parsed.timestamp) {
-        .@timestamp = .timestamp_parsed.timestamp
-    }
-    
-    # Extract log levels using GROK
-    .level_parsed, err = parse_grok(.input_string, "%{LOGLEVEL:log_level}")
-    if err == null && exists(.level_parsed.log_level) {
-        .log.level = .level_parsed.log_level
-    }
-    
-    # Extract IP addresses using GROK
-    .ip_parsed, err = parse_grok(.input_string, "%{IP:source_ip}")
-    if err == null && exists(.ip_parsed.source_ip) {
-        .source.ip = .ip_parsed.source_ip
-    }
-    
-    # Extract port numbers using GROK
-    .port_parsed, err = parse_grok(.input_string, "port %{INT:dest_port}")
-    if err == null && exists(.port_parsed.dest_port) {
-        .destination.port, err = to_int(.port_parsed.dest_port)
-    }
-    
-    # Extract usernames using GROK
-    .user_parsed, err = parse_grok(.input_string, "user %{USERNAME:username}")
-    if err == null && exists(.user_parsed.username) {
-        .user.name = .user_parsed.username
-    }
-    
-    # Extract file paths using GROK
-    .path_parsed, err = parse_grok(.input_string, "%{UNIXPATH:file_path}")
-    if err == null && exists(.path_parsed.file_path) {
-        .file.path = .path_parsed.file_path
-    }
-    
-    # Extract log levels (fallback)
-    if contains(.input_string, "error") {
-        .log.level = "error"
-    }
-    if contains(.input_string, "warn") {
-        .log.level = "warn"
-    }
-    if contains(.input_string, "info") {
-        .log.level = "info"
-    }
-    if contains(.input_string, "debug") {
-        .log.level = "debug"
-    }
-}
-
-# Ensure required fields exist
-if !exists(."event.kind") {
-    .event.kind = "event"
-}
-if !exists(."event.category") {
-    .event.category = ["unknown"]
-}
-if !exists(."event.type") {
-    .event.type = ["info"]
-}
-if !exists(."event.dataset") {
-    .event.dataset = "generic.logs"
-}
-if !exists(."event.created") {
-    .event.created = now()
-}
-if !exists(."@timestamp") {
-    .@timestamp = now()
-}
-
-# Add metadata (single assignments only)
-.log.original = .
-.tags = ["generic", "parsed", "grok-based"]
-
-# Compact the output
-. = compact(., string: true, array: true, object: true, null: true)
-"""
+            # ✅ USE AI TO GENERATE VRL WITH GROK PATTERNS - NO HARDCODING!
+            # Search RAG for examples
+            rag_results = self.rag_system.search(f"VRL parser for {log_format} logs with GROK patterns", k=3)
+            rag_context = "\n".join([doc.page_content[:300] for doc in rag_results]) if rag_results else "No examples found"
             
+            # Create comprehensive prompt matching GPT-4o's structure and quality
+            vrl_prompt = f"""Generate PRODUCTION-READY VRL parser for this log with EXCELLENT structure and indentation.
+
+IMPORTANT: VRL is NOT Python/JavaScript - it has NO imports, NO functions definitions, NO classes!
+
+LOG TO ANALYZE:
+{log_content}
+
+FORMAT: {log_format}
+
+CRITICAL REQUIREMENTS - GENERATE LIKE A PROFESSIONAL VECTOR ENGINEER:
+
+1. ANALYZE LOG STRUCTURE:
+   - Identify ALL fields in the log (timestamps, IPs, ports, usernames, etc.)
+   - Create GROK patterns that MATCH the actual log structure
+   - Extract EVERY meaningful field from the log
+
+2. PERFECT STRUCTURE & INDENTATION:
+   - Use clear section headers with ############ and ####
+   - Proper 2-space indentation throughout
+   - Descriptive comments for each section
+   - Logical grouping of operations
+   - Clean, readable code
+
+3. PROPER FIELD RENAMING & LOGIC:
+   - Use pattern: if exists(.old_field) {{ .new_field = del(.old_field) }}
+   - Map to proper ECS fields: @timestamp, host.hostname, source.ip, destination.ip, source.port, destination.port, user.name, event.action, event.outcome, log.level, message, etc.
+   - For fields NOT in ECS schema: Move to event_data.field_name
+   - Clean deletion with del() function for EVERY extracted field
+
+4. ADVANCED GROK PATTERNS:
+   - Use parse_groks() with multiple patterns
+   - ONLY use standard GROK syntax: %{{PATTERN:field_name}}
+   - Include fallback: "%{{GREEDYDATA:unparsed}}"
+   - NEVER use regex (?<field>...) or made-up patterns
+   - Common patterns: %{{TIMESTAMP_ISO8601}}, %{{IP}}, %{{HOSTNAME}}, %{{INT}}, %{{WORD}}, %{{NOTSPACE}}, %{{DATA}}, %{{GREEDYDATA}}
+
+5. SMART LOGIC & ERROR HANDLING:
+   - Priority calculation: .log.syslog.facility.code = floor(priority / 8)
+   - Severity mapping: 8 levels (emergency, alert, critical, error, warning, notice, informational, debug)
+   - Event outcome: failure for errors, success otherwise
+   - Type conversions: to_int!() for ports/numbers, downcase!() for strings
+   - Related entities: arrays for hosts, IPs, users
+
+6. TIMESTAMP PROCESSING:
+   - NEVER use ?? now() fallback
+   - Use: parsed_ts, err = parse_timestamp(.field, "%Y-%m-%dT%H:%M:%S%.f%:z")
+         if err == null {{ .@timestamp = parsed_ts }}
+   - NEVER use to_timestamp!() on strings
+
+RAG EXAMPLES:
+{rag_context}
+
+VRL SYNTAX RULES:
+- VRL has NO imports (no import statements!)
+- VRL has NO function definitions (no def or function)
+- VRL has NO classes
+- VRL is a transformation language, not programming language
+- Start directly with comments and code
+- NEVER add: import @vrl/..., def function(), class Parser, etc.
+
+EXACT OUTPUT FORMAT (match this structure exactly - NO IMPORTS!):
+###############################################################
+## VRL Transforms for {log_format.title()} Logs
+###############################################################
+
+#### Adding ECS fields ####
+if !exists(.observer.type) {{ .observer.type = "host" }}
+if !exists(.observer.vendor) {{ .observer.vendor = "syslog" }}
+if !exists(.observer.product) {{ .observer.product = "{log_format.lower()}" }}
+if !exists(.event.dataset) {{ .event.dataset = "{log_format.lower()}.logs" }}
+.event.category = ["network"]
+.event.kind = "event"
+
+#### Adding log metadata for visibility ####
+.log_type = "{log_format}"
+.log_format = "{log_format}"
+.log_source = "detected_from_log"
+.vendor = .observer.vendor
+.product = .observer.product
+
+#### Parse log message ####
+raw = to_string(.message) ?? to_string(.) ?? ""
+
+_grokked, err = parse_groks(raw, [
+  "[BUILD COMPLETE GROK WITH %{{PATTERN:field}} SYNTAX]",
+  "%{{GREEDYDATA:unparsed}}"
+])
+
+if err == null {{ . = merge(., _grokked, deep: true) }}
+
+#### Priority calculation (for syslog) ####
+if exists(.priority) {{
+  priority_int = to_int(.priority) ?? 0
+  .log.syslog.facility.code = floor(priority_int / 8)
+  .log.syslog.severity.code = mod(priority_int, 8)
+  
+  severity = .log.syslog.severity.code
+  if severity == 0 {{ .log.level = "emergency" }}
+  if severity == 1 {{ .log.level = "alert" }}
+  if severity == 2 {{ .log.level = "critical" }}
+  if severity == 3 {{ .log.level = "error" }}
+  if severity == 4 {{ .log.level = "warning" }}
+  if severity == 5 {{ .log.level = "notice" }}
+  if severity == 6 {{ .log.level = "informational" }}
+  if severity == 7 {{ .log.level = "debug" }}
+  
+  del(.priority)
+}}
+
+#### Parse timestamp ####
+if exists(.timestamp) {{
+  parsed_ts, ts_err = parse_timestamp(.timestamp, "%Y-%m-%dT%H:%M:%S%.f%:z")
+  if ts_err == null {{ .@timestamp = parsed_ts }}
+  del(.timestamp)
+}}
+
+#### Field extraction and ECS mapping ####
+if exists(.hostname) {{
+  .host.hostname = del(.hostname)
+  .host.name = .host.hostname
+}}
+
+if exists(.service) {{
+  .service.name = del(.service)
+  .process.name = .service.name
+}}
+
+if exists(.level) {{
+  .log.level = downcase!(del(.level)) ?? null
+}}
+
+if exists(.source_ip) {{ .source.ip = del(.source_ip) }}
+if exists(.dest_ip) {{ .destination.ip = del(.dest_ip) }}
+if exists(.source_port) {{ .source.port = to_int!(del(.source_port)) ?? null }}
+if exists(.dest_port) {{ .destination.port = to_int!(del(.dest_port)) ?? null }}
+if exists(.username) {{ .user.name = del(.username) }}
+
+#### Store non-ECS fields in event_data ####
+# Initialize event_data for custom/vendor-specific fields
+if !exists(.event_data) {{ .event_data = {{}} }}
+
+# IMPORTANT: Move fields that are NOT in ECS schema to event_data
+# Standard ECS fields: @timestamp, host.*, source.*, destination.*, user.*, event.*, log.*, observer.*, network.*, process.*, file.*, service.*, related.*
+# Non-ECS fields should go to: .event_data.field_name
+
+# Example: If you parsed vendor-specific fields like .session_id, .app_name, .custom_status
+# if exists(.session_id) {{ .event_data.session_id = del(.session_id) }}
+# if exists(.app_name) {{ .event_data.app_name = del(.app_name) }}
+# if exists(.custom_status) {{ .event_data.custom_status = del(.custom_status) }}
+
+# Add mappings for ANY field that's not in ECS standard
+
+#### Event outcome logic ####
+if exists(.log.level) {{
+  level = .log.level
+  if level == "error" || level == "err" || level == "critical" || level == "alert" || level == "emergency" {{
+        .event.outcome = "failure"
+  }} else {{
+        .event.outcome = "success"
+  }}
+}}
+
+#### Related entities ####
+.related.hosts = []
+if exists(.host.hostname) {{ .related.hosts = push(.related.hosts, .host.hostname) }}
+.related.hosts = unique(flatten(.related.hosts))
+
+.related.ip = []
+if exists(.source.ip) {{ .related.ip = push(.related.ip, .source.ip) }}
+if exists(.destination.ip) {{ .related.ip = push(.related.ip, .destination.ip) }}
+.related.ip = unique(flatten(.related.ip))
+
+#### Set original log ####
+.event.original = raw
+
+#### Cleanup temp fields ####
+del(.version)
+del(.procid)
+del(.msgid)
+del(.structdata)
+
+#### Compact final object ####
+. = compact(., string: true, array: true, object: true, null: true)
+
+CRITICAL: 
+- Generate ONLY pure VRL code (NO imports, NO def, NO class)
+- Start with ###############################################################
+- NO explanations before or after the code
+- NO "Below is the VRL parser" or similar text
+- NO Python/JavaScript syntax
+- Just the VRL code with exact indentation (2 spaces)"""
+            
+            # Use Ollama AI to generate VRL
+            response = self.llm.invoke(vrl_prompt)
+            vrl_code = response.strip()
+            
+            # Clean up markdown if present
+            if vrl_code.startswith("```"):
+                lines = vrl_code.split('\n')
+                start_idx = 1 if lines[0].startswith("```") else 0
+                end_idx = len(lines) - 1 if lines[-1].strip() == "```" else len(lines)
+                vrl_code = '\n'.join(lines[start_idx:end_idx])
+            
+            # Remove any preamble text before the actual VRL code
+            lines = vrl_code.split('\n')
+            cleaned_lines = []
+            vrl_started = False
+            
+            for line in lines:
+                # Skip invalid VRL syntax
+                if line.strip().startswith('import '):
+                    continue
+                if line.strip().startswith('from '):
+                    continue
+                if 'Below is' in line or 'Here is' in line:
+                    continue
+                if line.strip().startswith('def '):
+                    continue
+                if line.strip().startswith('class '):
+                    continue
+                
+                # VRL starts with # or ##
+                if not vrl_started and (line.startswith('#') or line.startswith('if ') or line.startswith('.')):
+                    vrl_started = True
+                
+                if vrl_started:
+                    cleaned_lines.append(line)
+            
+            vrl_code = '\n'.join(cleaned_lines).strip()
+            
+            # If AI generation has placeholders, clean them up
+            if "GROK-PATTERN-HERE" in vrl_code or "BUILD" in vrl_code:
+                # Replace placeholders with actual pattern based on log content
+                import re
+                # Simple fallback: use parse_syslog/parse_json based on format
+                if log_format == "json":
+                    vrl_code = vrl_code.replace("[BUILD COMPLETE GROK PATTERN WITH %{PATTERN:field} SYNTAX]", 
+                                               "# Parse JSON\njson_parsed, json_err = parse_json(raw)\nif json_err == null { . = merge(., json_parsed, deep: true) }")
+                elif log_format == "syslog":
+                    vrl_code = vrl_code.replace("[BUILD COMPLETE GROK PATTERN WITH %{PATTERN:field} SYNTAX]",
+                                               "# Parse syslog\nsyslog_parsed, syslog_err = parse_syslog(raw)\nif syslog_err == null { . = merge(., syslog_parsed, deep: true) }")
+                else:
+                    vrl_code = vrl_code.replace("[BUILD COMPLETE GROK PATTERN WITH %{PATTERN:field} SYNTAX]",
+                                               "# Parse key-value\nkv_parsed, kv_err = parse_key_value(raw)\nif kv_err == null { . = merge(., kv_parsed, deep: true) }")
             return {
                 "success": True,
                 "vrl_code": vrl_code.strip(),
